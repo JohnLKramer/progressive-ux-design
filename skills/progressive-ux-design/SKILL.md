@@ -1,6 +1,6 @@
 ---
 name: progressive-ux-design
-description: Use when writing, refining, or restructuring user-experience flows or user personas, when given an existing UX flow doc, user description, or market segmentation doc to put into a standard format, or when a flow needs more or less detail than its current layer.
+description: Use when writing, refining, restructuring, reviewing, or checking user-experience flows for ambiguity, consistency, or completeness, or user personas, when given an existing UX flow doc, user description, or market segmentation doc to put into a standard format, or when a flow needs more or less detail than its current layer.
 ---
 
 # Progressive UX Design
@@ -16,8 +16,9 @@ Load ONLY the file for the chosen mode. Templates are the output shape; fill eve
 | `high-level-flow-template` | Experience-level journey; judge user impact and sentiment. Not a state machine. | `high-level-flow-template.md` |
 | `low-level-flow-template` | Mostly-complete state machine of screens, user actions, system reactions. | `low-level-flow-template.md` |
 | `user-persona-template` | Who the user is, for judging flows. | `user-persona-template.md` |
+| `evaluate-flows` | Check one flow or a group for ambiguity, consistency, completeness; small fixes, then a survey. | `evaluate-flows.md` (granularity follows each doc's `level`; also load that level's template when correcting) |
 
-**Existing document supplied** (flow, user description, segmentation): also load `convert-existing-doc.md`. It picks the mode unless the user named one.
+**Existing document not in template format** (flow, user description, segmentation): also load `convert-existing-doc.md`. It picks the mode unless the user named one.
 
 **Free text, no mode named:** choose by detail in the input. Journey or intent → high-level. Per-screen actions and reactions → low-level. Description of people → persona. State the choice in one line in your reply (not in the document).
 
@@ -37,4 +38,4 @@ Final docs: where the user says, else `ux/<kind>/<id>.md` (`kind` = `flows` or `
 
 ## Not covered yet
 
-Evaluating consistency, scoring personas against flows, or auto-improving templates: see `docs/status.md`. Tell the user these don't exist yet.
+Scoring personas against flows, or auto-improving templates: see `docs/status.md`. Tell the user these don't exist yet.
