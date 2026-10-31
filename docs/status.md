@@ -11,6 +11,7 @@ Written at the end of the first session (2026-10-31). Covers what exists, how it
 | Low-level flow template | `skills/progressive-ux-design/low-level-flow-template.md` |
 | User persona template | `skills/progressive-ux-design/user-persona-template.md` |
 | Conversion procedure (existing doc → template) | `skills/progressive-ux-design/convert-existing-doc.md` |
+| Flow evaluation (ambiguity, consistency, completeness, survey) | `skills/progressive-ux-design/evaluate-flows.md` |
 | Plugin manifest | `.claude-plugin/plugin.json` |
 
 The spec's goal list has a "Detailed flow template" bullet between high and low. It has no mode of its own in the spec, so it is treated as the low-level template.
@@ -46,3 +47,12 @@ The spec's goal list has a "Detailed flow template" bullet between high and low.
 1. Write the checklist for high-level consistency; it is the smallest gap and unlocks the other five skills.
 2. Add a persona-versus-beat output format.
 3. Decide whether low-level states need an optional sentiment field.
+
+## Session 2: flow evaluation (2026-10-31)
+
+Added `evaluate-flows.md`, routed from the skill. It covers the spec's consistency and completeness goal.
+
+- Baseline (3 agents, no guidance): all edited docs on assumptions (e.g. changed a 30-day return to S1), added their own open questions, dumped every concern in one long reply, no skip option, no ordering, no per-flow labels, and raised completeness before asking.
+- GREEN (1 agent, stash-high + acquisition-low together): matched the spec's order, labels, skip option, and gating. Gaps it reported were closed: batch limits, summary counting, template-format findings out of scope, when docs get rewritten.
+- Not done: re-test after the gap fixes, and a low-level-only or single-doc run. One sample, no pressure scenarios.
+- Evaluation now exists, so the "Evaluate consistency" rows above are partly met; the machine-checkable checklist is still missing.
