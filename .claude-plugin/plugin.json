@@ -1,0 +1,5 @@
+{
+  "name": "progressive-ux-design",
+  "version": "0.1.0",
+  "description": "Layered UX flow design: high-level flows, low-level state-machine flows, and user personas, plus conversion of existing UX docs into those templates."
+}
