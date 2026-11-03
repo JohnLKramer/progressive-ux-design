@@ -40,4 +40,4 @@ Final docs: where the user says, else `ux/<kind>/<id>.md` (`kind` = `flows`, `pe
 
 ## Not covered yet
 
-Machine-checkable consistency validators: see `docs/status.md`.
+Machine-checkable consistency validators (including a screen validator; `screen-template.md` is checked by prose only): see `docs/status.md`.
