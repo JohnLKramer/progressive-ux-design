@@ -14,6 +14,7 @@ source: <original doc path, or free text>
 personas: [<persona-id>]        # cite ids only
 used_by: [{<flow-id>: [<state-ids>]}]   # informational; may be empty
 wireframe: <relative path>      # optional; omit if inline under ## Wireframe
+components: [<component-id>]    # optional; shared pieces this screen cites
 ---
 
 # <title>
@@ -75,6 +76,7 @@ wireframe: <relative path>      # optional; omit if inline under ## Wireframe
 - Wireframes carry structure only: regions, order, and content slots. No colors, fonts, spacing values, or imagery. A source wireframe is kept or linked, not redrawn.
 - Actions: screen-local results only. The Actions table never names a destination screen or flow state; it names an `Exit` (kebab-case, e.g. `open-profile`) or `none`. `Element` is an element id; use `screen` for triggers with no element (arrival, timer). Each offered action has a trigger and a local result, including close/back. An action the source implies but does not show: write the row, mark the result `(assumed)`, cite an Open question `Q#`. One it does not imply: open question only, no row. Scrolling and passive gestures are out of scope.
 - Exits: named handoffs, no destinations; flows resolve them. If the screen offers none, write one row `| none | | |`. Several actions sharing one exit are listed together in `Reached from` (`A2, A5`). Every Exit named in Actions is a row here, and every row here is named in Actions, except the `none` row.
+- Components: a shared piece (header, tab bar) lives in its own `component-template.md` doc and is cited, never copied. Cite it with an Elements row (`| El2 | component: <id> | | SS1, SS2 |`), list the id in `components:`, and mark its slot in the wireframe `[El2 component: <id>]` with no sketch of its own. The screen's Actions table does not repeat component actions (they are cited as `<component-id>.A<n>`); add a row only to override a local result, naming the cited action in `Element` (`<component-id>.A1`). The Exits table lists a used component's exits, `Reached from` = `<component-id>.A<n>`. The screen still owns which states show the component.
 - `used_by` is informational, may be empty, and flows win on conflict. Each entry is a map from flow id to a bracketed state-id list, e.g. `used_by: [{pick-flow: [S2, S3]}]`.
 - Precedence: States `Elements that change` wins; Elements `In states` derives from it.
 - Unknown states, copy, guards, or behavior become open questions (`Origin`, `Resolve in`), not invention. Don't add states the source doesn't show or imply; list the unknown state in the question instead.

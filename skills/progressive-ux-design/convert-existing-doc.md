@@ -5,6 +5,7 @@ Best effort. The input may lack the detail the target needs; deliver a complete 
 1. **Classify** the input: flow doc, user/persona doc, segmentation doc, or single-screen doc or markdown UI wireframe. Several inputs → one output per flow, persona, or screen.
 2. **Choose the target** unless the user named one:
    - Single-screen doc or markdown UI wireframe → `screen-template`.
+   - A reusable piece of a screen (header, tab bar) described alone → `component-template`.
    - Flow with per-screen actions and reactions → low-level, and also high-level if asked for both.
    - Flow that is a narrative, outline, or only goals and steps → high-level.
    - Low-level asked of a thin source → produce it with `(assumed)` rows and Open questions.
@@ -24,6 +25,7 @@ Best effort. The input may lack the detail the target needs; deliver a complete 
 | States the source shows or describes | States rows |
 | States beyond what the source shows | Open questions (`Origin: added`), never invented |
 | Actions the source implies | Actions rows; an action the source implies but does not show gets `(assumed)` plus an Open question `Q#`; an action it does not imply gets an Open question only, no row |
+| Region repeated across several source screens (header, tab bar) | Offer a `component-template` doc and cite it from each screen; ask first, never extract unasked. Not extracted: the region stays in the screen sketch |
 | Screen content found while converting a flow | Stays in the flow; add a `Screen` pointer only if the screen doc exists, else `none` |
 | Evidence, limitations, confidence (persona) | Tags and Gaps; keep confidence |
 

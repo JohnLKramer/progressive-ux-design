@@ -12,6 +12,7 @@ Written at the end of the first session (2026-10-31). Covers what exists, how it
 | User persona template | `skills/progressive-ux-design/user-persona-template.md` |
 | Conversion procedure (existing doc → template) | `skills/progressive-ux-design/convert-existing-doc.md` |
 | Flow evaluation (ambiguity, consistency, completeness, survey) | `skills/progressive-ux-design/evaluate-flows.md` |
+| Component template (shared screen pieces, cited by id) | `skills/progressive-ux-design/component-template.md` |
 | Plugin manifest | `.claude-plugin/plugin.json` |
 
 The spec's goal list has a "Detailed flow template" bullet between high and low. It has no mode of its own in the spec, so it is treated as the low-level template.
@@ -127,3 +128,9 @@ Beyond the ids (`El#`/`A#`/`SS#`): transitions cite `<screen-id>.A<n>` (not the 
 ### Final review fixes
 
 The final whole-branch review findings were fixed in a later commit (`fix: address final review findings`): evaluate row loads `screen-template.md`; Exit naming in flows (`via <exit-name>`); safe `used_by` rule with partial input; unsupplied screen ids not checked; embed-by-default for wireframes; `source:` on screens; precedence rule for `In states`, `used_by` YAML example, router and description wording, and `none` Exit exception. The Milestone 1 minors were closed and re-reviewed clean, so no deferred minors remain.
+
+## Session 5: component template (2026-11-03)
+
+Added `component-template.md` so a shared piece (header, tab bar) is written once and cited by screens, as flows already cite screens. Screens gain `components:` front matter, a `component: <id>` Elements row, and `<component-id>.A<n>` action citations. Router, convert (offer, never extract unasked), and evaluate (component lens, screen-vs-component cross-doc checks, owner rule) are updated. Design: `docs/superpowers/specs/2026-11-03-component-template-design.md`.
+
+Not done: no agent runs of the new evaluate checks or conversion offer (prose reviewed only); nested components, parameterized variants, and validators are out of scope.
