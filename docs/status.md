@@ -93,31 +93,37 @@ Decision: ids are `El#` (elements), `A#` (actions), `SS#` (screen states), not `
 
 ### Results by task
 
-- Task 1, baseline (2 sonnet agents, no screen hint; game-picks wireframe and the-stash): both fell back to the low-level flow template. 0 of 2 had element ids, a layout section, or a state matrix. game-picks invented 3 states and 10 transitions, the-stash invented a state and 19 transitions, and both dropped the wireframe. 10 and 14 open questions.
-- Task 2, GREEN (2 agents, same inputs): both used the template layout with `El#`/`A#`/`SS#` ids, kebab-case exits, no destinations in Actions, and gaps recorded as open questions. 5 gaps closed (callouts only in a legend, `El8a`-style ids, n/a state rows without ids, overlay states unlabelled, wireframe invented from a layout table). After review, the 2 agents were re-run and spot-checked with grep only, not read in full. game-picks ended with 16 elements, 2 actions, 1 exit, 10 open questions.
+- Task 1, baseline (2 sonnet agents, no screen hint; game-picks wireframe and the-stash): both fell back to the low-level flow template. 0 of 2 had element ids, a layout section, or a state matrix. game-picks added 2 assumed states and 9 assumed of 10 transitions, the-stash added 1 state variant and 4 assumed of 19 transitions; game-picks dropped the wireframe, the-stash its mermaid diagram. 10 and 14 open questions.
+- Task 2, GREEN (2 agents, same inputs): both used the template layout with `El#`/`A#`/`SS#` ids, kebab-case exits, no destinations in Actions, and gaps recorded as open questions. gaps closed: callouts only in a legend, `El8a`-style ids, n/a state rows without ids and unlabelled overlay states, wireframe invented from a layout table, `screen` Element and implied-but-unshown actions. After review, the 2 agents were re-run and spot-checked with grep only, not read in full. game-picks ended with 16 elements, 2 actions, 1 exit, 10 open questions.
 - Task 3, integration: check script RED 2 failures (no Screen column, no wireframe case), then PASS. Regression: 1 agent converted the-stash to low-level, all template sections present, Screen column set to `none` on 7 of 7 states, 0 invented screen ids, 0 `El#`/`SS#`/`A#` leaks.
 - Task 4, evaluation (fixture pairs: flow plus screen, clean and with 2 seeded contradictions, A2 stays vs moves and a missing A9). Baseline: found both, but as "conflicts between two flows", with no ownership marker and intent-presuming options. GREEN: 2 cross-doc conflicts found, options Change the screen / Change the flow / Skip, owner by rule, skipped items become Open questions on the flow (`Resolve in: low`). Clean pair: 0 cross-doc conflicts, empty `used_by` not flagged, no convert question. Rule the GREEN run forced: a contradiction between two docs is not a gap, and an Open question on one side does not suppress it (the run suppressed the A2 conflict because the screen's Q3 covered El6).
 
 ### Review rounds
 
 - Milestone 1 (Tasks 1 to 2): 5 Important fixed in 1 round. They were: literal n/a example row, source-silent state wording plus Open question, `not drawn` exception for elements in undrawn states, non-conversion wireframe sketch note, and the router tie-breaker (connected screens: low-level; one screen in isolation: screen).
-- Milestone 2 (Tasks 3 to 4): 5 Important and 2 spec gaps fixed in 1 round. Survey groups 2 to 4 now cover screens with `Flow: <id> vs Screen: <id>` prefixes; the summary shows `<id> (screen)`; the owner rule covers which Exits exist (screen) and where an Exit leads (flow); a `used_by` mismatch is a step-2 correction (flows win); the covered-gap rule is stated once. The spec gaps were lens rows for parameters-in-table and every element in a state, and a convert row for states the source shows. Re-test: clean pair 0 conflicts; conflict pair run 1 suppressed A2 (the rule above), run 2 found both.
+- Milestone 2 (Tasks 3 to 4): 5 Important and 3 spec gaps fixed in 1 round. Survey groups 2 to 4 now cover screens with `Flow: <id> vs Screen: <id>` prefixes; the summary shows `<id> (screen)`; the owner rule covers which Exits exist (screen) and where an Exit leads (flow); a `used_by` mismatch is a step-2 correction (flows win); the covered-gap rule is stated once. The spec gaps were lens rows for parameters-in-table and every element in a state, and a convert row for states the source shows. Re-test: clean pair 0 conflicts; conflict pair run 1 suppressed A2 (the rule above), run 2 found both.
 
 ### Not done
 
 - Persona simulation over screens (`simulate-flows.md` is unchanged).
 - A validator script; the checks are still prose.
 - Design-token specs; the template is structure only.
-- A re-run of the Task 4 clean evaluation after its last rule sentence; the sentence only reduces findings.
+- A re-run of the Task 4 clean evaluation after its last rule sentence; not re-run after the contradiction sentence; the clean pair has no contradictions, so no change is expected.
 - `<screen-id>.A<n>` was not exercised end to end by the Task 3 regression run; its flows had `Screen` set to `none` throughout.
 - Runs on any domain other than sports picks.
 - Single runs, no repetitions.
+- A linked `wireframe:` path, including the key-under-`## Wireframe` rule.
+- A `wireframe:` path that does not resolve (Review Focus 4 has a rule, no test).
+- Routing free text to screen mode (every run named a file and said "one screen").
+- A static screen with real `n/a, because <reason>` rows (game-picks only had "source does not show it").
+- An author writing a flow with a real `Screen` id (only hand-made fixtures).
+- Visual styling in wireframes (spec out-of-scope).
+- The spec's testing plan said "the Stash flow's screens" (plural); only one Stash screen was extracted.
 
-### Known deferred minors
+### Spec deviations
 
-- Closed in the Task 2 fix round but not re-reviewed: Exits example `Reached from` A2 vs Actions example; `none` Exits form; shared exits; wireframe `none` and the `not drawn` callout exception.
-- Elements-that-change and In-states carry overlapping facts, with no precedence rule.
-- `used_by` YAML example, `SKILL.md` description wording, and the evaluate row naming only a level before Task 4.
-- Actions/Exits cross-reference: a `none` Exit needs a row only when the screen has no exits.
-- A flow `Screen` id that does not resolve when the screen is not in the input; screen missing-slot findings; the flow completeness rule vs the linked screen's `A<n>`.
-- A skipped screen-vs-flow conflict becomes an Open question that does not suppress re-asking on a later run (probably intended, unstated).
+Beyond the ids (`El#`/`A#`/`SS#`): transitions cite `<screen-id>.A<n>` (not the spec's `E4 tap`), and the flow gets a `Screen` column in States (not a `screen:` field). The spec carries a superseded note.
+
+### Final review fixes
+
+The final whole-branch review findings were fixed in a later commit (`fix: address final review findings`): evaluate row loads `screen-template.md`; Exit naming in flows (`via <exit-name>`); safe `used_by` rule with partial input; unsupplied screen ids not checked; embed-by-default for wireframes; `source:` on screens; precedence rule for `In states`, `used_by` YAML example, router and description wording, and `none` Exit exception. The Milestone 1 minors were closed and re-reviewed clean, so no deferred minors remain.

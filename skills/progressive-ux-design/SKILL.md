@@ -1,6 +1,6 @@
 ---
 name: progressive-ux-design
-description: Use when writing, refining, restructuring, reviewing, or checking user-experience flows for ambiguity, consistency, or completeness, or user personas, or screens, or when asked how a persona would react to, get bored by, or get stuck in a flow, when given an existing UX flow doc, user description, or market segmentation doc to put into a standard format, or when a flow needs more or less detail than its current layer.
+description: Use when writing, refining, restructuring, reviewing, or checking user-experience flows for ambiguity, consistency, or completeness, user personas, single screens, or markdown UI wireframes, or when asked how a persona would react to, get bored by, or get stuck in a flow, when given an existing UX flow doc, user description, or market segmentation doc to put into a standard format, or when a flow needs more or less detail than its current layer.
 ---
 
 # Progressive UX Design
@@ -17,16 +17,16 @@ Load ONLY the file for the chosen mode. Templates are the output shape; fill eve
 | `low-level-flow-template` | Mostly-complete state machine of screens, user actions, system reactions. | `low-level-flow-template.md` |
 | `screen-template` | One screen: elements, states, actions, exits; may embed or link a markdown UI wireframe. Used by many flows. | `screen-template.md` |
 | `user-persona-template` | Who the user is, for judging flows. | `user-persona-template.md` |
-| `evaluate-flows` | Check one flow or a group for ambiguity, consistency, completeness; small fixes, then a survey. | `evaluate-flows.md` (granularity follows each doc's `level`; also load that level's template when correcting) |
+| `evaluate-flows` | Check one flow or a group, with or without screen docs, for ambiguity, consistency, completeness; small fixes, then a survey. | `evaluate-flows.md` (granularity follows each doc's `level`; also load that level's template, or `screen-template.md` for a `kind: screen` doc, when correcting) |
 | `simulate-flows` | Persona agents walk a flow; report, recommendations, update. Judges understanding, friction, delight, boredom, goal. | `simulate-flows.md`, then `simulate-report.md` |
 
-**Existing document not in template format** (flow, user description, segmentation): also load `convert-existing-doc.md`. It picks the mode unless the user named one.
+**Existing document not in template format** (flow, user description, segmentation, single-screen doc or wireframe): also load `convert-existing-doc.md`. It picks the mode unless the user named one.
 
 **Free text, no mode named:** choose by detail in the input. Journey or intent → high-level. Per-screen actions and reactions across connected screens → low-level. Description of people → persona. Description of one screen's elements and states, in isolation → screen. State the choice in one line in your reply (not in the document).
 
 ## Rules for every output
 
-- One layer per document. Link layers with ids (`parent`, `beat`/`state` refs), never by copying content.
+- One layer per document. Link layers with ids (`parent`, `beat`/`state` refs, a flow's `Screen` id, `<screen-id>.A<n>`), never by copying content.
 - A **parameter** is a number, duration, time, threshold, or member of a fixed set that the product team decides. It goes in the **External parameters** table: `Value` = the source's value, else `unspecified`; `Rubric` = path/URL, else `none yet`. Prose refers to it by name ("the expiry window"), never inlines it. A value the source refers to but doesn't give ("some cutoff", "the morning of") is implied; anything else is not, so don't add it.
 - A gap becomes an **Open question**, tagged with `Origin` (`source` if the input asked it, `added` if you found it) and `Resolve in` (`high`, `low`, `persona`, `product`). Don't fill gaps with invention.
 - Converting? End the doc with a `## Conversion note` (dropped, assumed, missing). Not converting: omit it.

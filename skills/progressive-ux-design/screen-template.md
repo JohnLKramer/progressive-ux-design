@@ -10,8 +10,9 @@ title: <screen name>
 status: draft
 purpose: <one sentence>
 route: <route or surface>
+source: <original doc path, or free text>
 personas: [<persona-id>]        # cite ids only
-used_by: [<flow-id (state ids)>]   # informational; may be empty
+used_by: [{<flow-id>: [<state-ids>]}]   # informational; may be empty
 wireframe: <relative path>      # optional; omit if inline under ## Wireframe
 ---
 
@@ -73,8 +74,9 @@ wireframe: <relative path>      # optional; omit if inline under ## Wireframe
 - Wireframe: either an inline fenced block under `## Wireframe` or a relative path in front matter `wireframe:` (rewrite it to resolve from the output file). Callouts are written `[El3]` inside the wireframe itself, never only in a legend below it; every callout resolves to the Elements table, and every element has a callout, except an element that exists only in a state the wireframe doesn't draw (e.g. an error banner): mark it `not drawn` in the key or the States `Wireframe` column. A source wireframe with no callouts: add `[El#]` marks to the inline copy, changing nothing else; if it is linked, leave the file untouched and list the marks as a key under `## Wireframe`. Source with no wireframe: sketch regions and slots from the described layout only, and say so in the conversion note, or for a non-conversion in a one-line comment under `## Wireframe`. If no layout is described, sketch nothing: leave the section as `none` and add an Open question (`Origin: added`, `Resolve in: low`). Per-state wireframes: name them in the States `Wireframe` column, else `same`.
 - Wireframes carry structure only: regions, order, and content slots. No colors, fonts, spacing values, or imagery. A source wireframe is kept or linked, not redrawn.
 - Actions: screen-local results only. The Actions table never names a destination screen or flow state; it names an `Exit` (kebab-case, e.g. `open-profile`) or `none`. `Element` is an element id; use `screen` for triggers with no element (arrival, timer). Each offered action has a trigger and a local result, including close/back. An action the source implies but does not show: write the row, mark the result `(assumed)`, cite an Open question `Q#`. One it does not imply: open question only, no row. Scrolling and passive gestures are out of scope.
-- Exits: named handoffs, no destinations; flows resolve them. If the screen offers none, write one row `| none | | |`. Several actions sharing one exit are listed together in `Reached from` (`A2, A5`). Every Exit named in Actions is a row here, and every row here is named in Actions.
-- `used_by` is informational, may be empty, and flows win on conflict.
+- Exits: named handoffs, no destinations; flows resolve them. If the screen offers none, write one row `| none | | |`. Several actions sharing one exit are listed together in `Reached from` (`A2, A5`). Every Exit named in Actions is a row here, and every row here is named in Actions, except the `none` row.
+- `used_by` is informational, may be empty, and flows win on conflict. Each entry is a map from flow id to a bracketed state-id list, e.g. `used_by: [{pick-flow: [S2, S3]}]`.
+- Precedence: States `Elements that change` wins; Elements `In states` derives from it.
 - Unknown states, copy, guards, or behavior become open questions (`Origin`, `Resolve in`), not invention. Don't add states the source doesn't show or imply; list the unknown state in the question instead.
 - Copy: refer to a copy key or the source's text; don't write new copy.
 - Parameters: values the product team decides (limits, counts, durations) go in External parameters; prose uses the name.

@@ -1,7 +1,7 @@
 # Screen template design
 
 Date: 2026-11-02
-Status: draft, awaiting review
+Status: superseded in details by the plan (element ids `El#`; `Screen` column; `<screen-id>.A<n>`); see docs/status.md Session 4.
 
 ## Intent
 

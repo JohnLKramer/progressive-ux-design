@@ -19,7 +19,7 @@ Best effort. The input may lack the detail the target needs; deliver a complete 
 | Business rules | Rules section (both levels); condition on one transition → guard (low) |
 | Edge-case table | Transitions (low); named branches or sentiment risk (high) |
 | Layout, copy, hit areas (when target is high) | Dropped from the output; mentioned once in the conversion note |
-| Wireframe (screen target) | Embedded `## Wireframe` block, or `wireframe:` relative path if it is a standalone markdown UI file (link it, keep the file) |
+| Wireframe (screen target) | Embedded `## Wireframe` block with callouts added by default; `wireframe:` relative path (file kept untouched) only if the user asks or the file is maintained separately |
 | Elements visible in the wireframe | Elements with `El#` |
 | States the source shows or describes | States rows |
 | States beyond what the source shows | Open questions (`Origin: added`), never invented |

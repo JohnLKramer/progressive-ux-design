@@ -54,7 +54,7 @@ source: <original doc path or "free text">
 
 ## Fill rules
 
-- Completeness check before finishing: each state lists every action the screen offers (including close/back); each transition has a `To` that is a state or an Exit; each state is reachable from an entry point or another state.
+- Completeness check before finishing: each state lists every action the screen offers (including close/back); each transition has a `To` that is a state or an Exit; each state is reachable from an entry point or another state. A state linked to a screen needs a transition only for the screen actions the journey uses; screen-local actions need no flow row.
 - Failure the user can see (save fails, rejected input) gets a transition. Failure invisible to the user is out of scope.
 - Add a mermaid `stateDiagram-v2` only if asked; the tables are the source of truth.
 - "From beat": the `parent` beat id; `none` when parent is none. Don't restate beat text.
@@ -65,5 +65,5 @@ source: <original doc path or "free text">
 - A surface the user sees without opening a screen (notification, email) may be a state.
 - Exits: if every path loops back to a home state, write `none (flow loops)`.
 - `Screen`: the id of the screen doc when the state is a screen with its own doc, else `none`. Never invent an id. `Shows` then holds only journey-specific variation; link the screen, don't copy its elements. `Screen / surface` keeps journey-specific surface text.
-- A transition may name a screen action as `<screen-id>.A<n>` in `User action` (e.g. `game-picks.A2`); the action must exist on that screen. The screen's `Exit` supplies the handoff; this flow decides `To`. The screen owns local behavior, the flow owns the journey.
+- A transition may name a screen action as `<screen-id>.A<n>` in `User action` (e.g. `game-picks.A2`); the action must exist on that screen. The Exit a flow uses is the cited action's `Exit`; if named, it goes in `System reaction` as `via <exit-name>`. This flow decides `To`. The screen owns local behavior, the flow owns the journey.
 - `personas: [unspecified]` when none is implied.
