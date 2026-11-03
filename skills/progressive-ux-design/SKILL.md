@@ -1,6 +1,6 @@
 ---
 name: progressive-ux-design
-description: Use when writing, refining, restructuring, reviewing, or checking user-experience flows for ambiguity, consistency, or completeness, or user personas, or when asked how a persona would react to, get bored by, or get stuck in a flow, when given an existing UX flow doc, user description, or market segmentation doc to put into a standard format, or when a flow needs more or less detail than its current layer.
+description: Use when writing, refining, restructuring, reviewing, or checking user-experience flows for ambiguity, consistency, or completeness, or user personas, or screens, or when asked how a persona would react to, get bored by, or get stuck in a flow, when given an existing UX flow doc, user description, or market segmentation doc to put into a standard format, or when a flow needs more or less detail than its current layer.
 ---
 
 # Progressive UX Design
@@ -15,13 +15,14 @@ Load ONLY the file for the chosen mode. Templates are the output shape; fill eve
 |---|---|---|
 | `high-level-flow-template` | Experience-level journey; judge user impact and sentiment. Not a state machine. | `high-level-flow-template.md` |
 | `low-level-flow-template` | Mostly-complete state machine of screens, user actions, system reactions. | `low-level-flow-template.md` |
+| `screen-template` | One screen: elements, states, actions, exits; may embed or link a markdown UI wireframe. Used by many flows. | `screen-template.md` |
 | `user-persona-template` | Who the user is, for judging flows. | `user-persona-template.md` |
 | `evaluate-flows` | Check one flow or a group for ambiguity, consistency, completeness; small fixes, then a survey. | `evaluate-flows.md` (granularity follows each doc's `level`; also load that level's template when correcting) |
 | `simulate-flows` | Persona agents walk a flow; report, recommendations, update. Judges understanding, friction, delight, boredom, goal. | `simulate-flows.md`, then `simulate-report.md` |
 
 **Existing document not in template format** (flow, user description, segmentation): also load `convert-existing-doc.md`. It picks the mode unless the user named one.
 
-**Free text, no mode named:** choose by detail in the input. Journey or intent → high-level. Per-screen actions and reactions → low-level. Description of people → persona. State the choice in one line in your reply (not in the document).
+**Free text, no mode named:** choose by detail in the input. Journey or intent → high-level. Per-screen actions and reactions → low-level. Description of people → persona. Description of one screen's elements and states → screen. State the choice in one line in your reply (not in the document).
 
 ## Rules for every output
 
@@ -35,7 +36,7 @@ Load ONLY the file for the chosen mode. Templates are the output shape; fill eve
 
 ## Locations
 
-Final docs: where the user says, else `ux/<kind>/<id>.md` (`kind` = `flows` or `personas`). Intermediate drafts only: `.superpowers/work/`.
+Final docs: where the user says, else `ux/<kind>/<id>.md` (`kind` = `flows`, `personas`, or `screens`). Intermediate drafts only: `.superpowers/work/`.
 
 ## Not covered yet
 
