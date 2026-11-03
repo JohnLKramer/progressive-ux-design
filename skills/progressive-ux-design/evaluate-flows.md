@@ -1,6 +1,6 @@
 # Evaluating flows
 
-Input: one flow doc or a group, optionally with screen docs. Each doc's `level:` front matter sets its granularity. A doc with `kind: screen` is a screen: evaluate it with the screen lens below; it has no `level` and never triggers the convert question. A flow doc without `level:` front matter: ask whether to convert it to high or low (`convert-existing-doc.md`), then evaluate the result. Missing template slots or formatting in a doc that has `level:`, or in a `kind: screen` doc (apart from the required state rows), are not findings; leave them.
+Input: one flow doc or a group, optionally with screen docs. Each doc's `level:` front matter sets its granularity. A doc with `kind: screen` is a screen: evaluate it with the screen lens below; it has no `level` and never triggers the convert question. A doc with `kind: component` is a component: evaluate it with the component lens below; it has no `level` or states. A flow doc without `level:` front matter: ask whether to convert it to high or low (`convert-existing-doc.md`), then evaluate the result. Missing template slots or formatting in a doc that has `level:`, or in a `kind: screen` doc (apart from the required state rows), are not findings; leave them.
 
 Three lenses:
 
@@ -17,6 +17,23 @@ Screen docs (`kind: screen`):
 | **Ambiguity** | An element or state that reads two ways |
 | **Consistency** | Callouts vs Elements, `In states` vs States rows, Actions vs Exits; every parameter used is in the parameters table; a `wireframe:` path that does not resolve |
 | **Completeness** | Required states (default, loading, empty, error) present or `n/a, because ...`; every element appears in at least one state; every action has a trigger and a local result; every Exit declared |
+
+Component docs (`kind: component`):
+
+| Lens | Component doc |
+|---|---|
+| **Ambiguity** | An element or action that reads two ways |
+| **Consistency** | Callouts vs Elements, Actions vs Exits, every parameter used is in the parameters table; a `used_by` or action citing another component (nesting is out of scope) |
+| **Completeness** | Every action has a trigger and a local result; every Exit declared; no state rows (screens own states) |
+
+Cross-doc checks when a screen and a component are both given. Each failure is a cross-doc conflict in the summary:
+- Every component id in a screen's `components` or Elements `component:` rows resolves to a supplied component doc; an id whose doc is not supplied is not checked.
+- Every `<component-id>.A<n>` a screen cites exists on that component.
+- Every component Exit appears in the screen's Exits table with `Reached from` naming the cited action, and no screen Exit names a component action that doesn't exist.
+- The screen does not redefine a component's element or action (its own copy of the header's elements, or a screen row that contradicts the component's `Local result` without being marked as an override).
+- A component's `used_by` is compared only against the supplied screens, with the same safe rule as screens: add citing screens, never remove entries for unsupplied ones; a mismatch is a small correction (screens win).
+
+The component owns what its own elements and actions do and which Exits it offers. The screen owns where the component sits and which states show it.
 
 Cross-doc checks when a flow and a screen are both given. Each failure is a cross-doc conflict in the summary:
 - Every flow `Screen` id resolves to a supplied screen doc; an id whose doc is not supplied is not checked (cite the id only).
@@ -58,6 +75,7 @@ Use the interactive question tool: one call per step-4 group, at most 4 question
 - Every question starts with `Flow: <id>` (or `Flows: <id> vs <id>`; `Flow: <id> vs Screen: <id>` for a screen-vs-flow conflict; `Screen: <id>` for a screen alone; `Group` for group-wide).
 - State the concern in one sentence, quoting the beat/state/transition ids involved.
 - Options: the plausible readings, then **Skip (decide later)**. Always present, always last.
+- Screen-vs-component conflict: options are "Change the screen", "Change the component", then Skip, with "(owner by the rule)" on the component for what its actions do and which Exits it offers, and on the screen for placement and states. Prefix `Screen: <id> vs Component: <id>`. A skipped one becomes an Open question on the screen with `Resolve in: low`.
 - Screen-vs-flow conflict: options are "Change the screen", "Change the flow", then Skip. Append "(owner by the rule)" to the side that owns the contested thing (what an action does on the screen, including whether the user stays or leaves, and which actions exist and which Exits exist: screen; where an Exit leads and which state follows: flow). An item with no owner under this rule gets no mark. Say nothing else about which is right; never guess intent. A skipped one becomes an Open question with `Resolve in: low`, recorded on the flow; it is asked again on a later run, on purpose (it is a contradiction, not a covered gap).
 - A question never contains a recommendation that presumes intent. Offer readings; the user picks.
 - No question on a lens or topic the user declined.
