@@ -2,7 +2,7 @@
 
 Best effort. The input may lack the detail the target needs; deliver a complete template with gaps listed.
 
-1. **Classify** the input: flow doc, user/persona doc, segmentation doc, or single-screen doc or markdown UI wireframe. Several inputs → one output per flow or persona.
+1. **Classify** the input: flow doc, user/persona doc, segmentation doc, or single-screen doc or markdown UI wireframe. Several inputs → one output per flow, persona, or screen.
 2. **Choose the target** unless the user named one:
    - Single-screen doc or markdown UI wireframe → `screen-template`.
    - Flow with per-screen actions and reactions → low-level, and also high-level if asked for both.
@@ -21,8 +21,9 @@ Best effort. The input may lack the detail the target needs; deliver a complete 
 | Layout, copy, hit areas (when target is high) | Dropped from the output; mentioned once in the conversion note |
 | Wireframe (screen target) | Embedded `## Wireframe` block, or `wireframe:` relative path if it is a standalone markdown UI file (link it, keep the file) |
 | Elements visible in the wireframe | Elements with `El#` |
-| States beyond what the wireframe shows | Open questions (`Origin: added`), never invented |
-| Actions the source implies | Actions rows; local result `(assumed)` or unknown if not stated, with an Open question |
+| States the source shows or describes | States rows |
+| States beyond what the source shows | Open questions (`Origin: added`), never invented |
+| Actions the source implies | Actions rows; an action the source implies but does not show gets `(assumed)` plus an Open question `Q#`; an action it does not imply gets an Open question only, no row |
 | Screen content found while converting a flow | Stays in the flow; add a `Screen` pointer only if the screen doc exists, else `none` |
 | Evidence, limitations, confidence (persona) | Tags and Gaps; keep confidence |
 
