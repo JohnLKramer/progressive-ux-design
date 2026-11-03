@@ -2,8 +2,9 @@
 
 Best effort. The input may lack the detail the target needs; deliver a complete template with gaps listed.
 
-1. **Classify** the input: flow doc, user/persona doc, or segmentation doc. Several inputs → one output per flow or persona.
+1. **Classify** the input: flow doc, user/persona doc, segmentation doc, or single-screen doc or markdown UI wireframe. Several inputs → one output per flow, persona, or screen.
 2. **Choose the target** unless the user named one:
+   - Single-screen doc or markdown UI wireframe → `screen-template`.
    - Flow with per-screen actions and reactions → low-level, and also high-level if asked for both.
    - Flow that is a narrative, outline, or only goals and steps → high-level.
    - Low-level asked of a thin source → produce it with `(assumed)` rows and Open questions.
@@ -18,6 +19,12 @@ Best effort. The input may lack the detail the target needs; deliver a complete 
 | Business rules | Rules section (both levels); condition on one transition → guard (low) |
 | Edge-case table | Transitions (low); named branches or sentiment risk (high) |
 | Layout, copy, hit areas (when target is high) | Dropped from the output; mentioned once in the conversion note |
+| Wireframe (screen target) | Embedded `## Wireframe` block with callouts added by default; `wireframe:` relative path (file kept untouched) only if the user asks or the file is maintained separately |
+| Elements visible in the wireframe | Elements with `El#` |
+| States the source shows or describes | States rows |
+| States beyond what the source shows | Open questions (`Origin: added`), never invented |
+| Actions the source implies | Actions rows; an action the source implies but does not show gets `(assumed)` plus an Open question `Q#`; an action it does not imply gets an Open question only, no row |
+| Screen content found while converting a flow | Stays in the flow; add a `Screen` pointer only if the screen doc exists, else `none` |
 | Evidence, limitations, confidence (persona) | Tags and Gaps; keep confidence |
 
 5. **Don't invent.** Unknown stays a gap. Inferred content is tagged. Contradictions in the source are listed, not resolved.
