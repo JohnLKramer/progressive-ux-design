@@ -22,7 +22,7 @@ Load ONLY the file for the chosen mode. Templates are the output shape; fill eve
 
 **Existing document not in template format** (flow, user description, segmentation): also load `convert-existing-doc.md`. It picks the mode unless the user named one.
 
-**Free text, no mode named:** choose by detail in the input. Journey or intent → high-level. Per-screen actions and reactions → low-level. Description of people → persona. Description of one screen's elements and states → screen. State the choice in one line in your reply (not in the document).
+**Free text, no mode named:** choose by detail in the input. Journey or intent → high-level. Per-screen actions and reactions across connected screens → low-level. Description of people → persona. Description of one screen's elements and states, in isolation → screen. State the choice in one line in your reply (not in the document).
 
 ## Rules for every output
 
