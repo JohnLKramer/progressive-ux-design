@@ -13,6 +13,7 @@ Written at the end of the first session (2026-10-31). Covers what exists, how it
 | Conversion procedure (existing doc → template) | `skills/progressive-ux-design/convert-existing-doc.md` |
 | Flow evaluation (ambiguity, consistency, completeness, survey) | `skills/progressive-ux-design/evaluate-flows.md` |
 | Component template (shared screen pieces, cited by id) | `skills/progressive-ux-design/component-template.md` |
+| Find gaps (missing pages and behaviors; interview, then design offer) | `skills/progressive-ux-design/find-gaps.md` |
 | Plugin manifest | `.claude-plugin/plugin.json` |
 
 The spec's goal list has a "Detailed flow template" bullet between high and low. It has no mode of its own in the spec, so it is treated as the low-level template.
@@ -134,3 +135,46 @@ The final whole-branch review findings were fixed in a later commit (`fix: addre
 Added `component-template.md` so a shared piece (header, tab bar) is written once and cited by screens, as flows already cite screens. Screens gain `components:` front matter, a `component: <id>` Elements row, and `<component-id>.A<n>` action citations. Router, convert (offer, never extract unasked), and evaluate (component lens, screen-vs-component cross-doc checks, owner rule) are updated. Design: `docs/superpowers/specs/2026-11-03-component-template-design.md`.
 
 Not done: no agent runs of the new evaluate checks or conversion offer (prose reviewed only); nested components, parameterized variants, and validators are out of scope.
+
+## Session 6: find gaps (2026-11-06)
+
+Added `find-gaps.md`, routed from the skill (router row, free-text rule, description). It reads a set of UX docs and finds what is absent: missing pages (a link or action points at something with no doc) and missing behaviors (a state-dependent capability the docs leave undefined, including the counterpart role, such as the receiving side of a sent item). It does not convert docs first. Each candidate goes to the user as an interview question (last option Skip); skips become Open questions citing the doc, with `Origin: added` and `Resolve in: product`. After the interview, missing pages get one design offer. Design: `docs/superpowers/specs/2026-11-06-find-gaps-design.md`; plan: `docs/superpowers/plans/2026-11-06-find-gaps.md`. The `SKILL.md` "Not covered yet" line is unchanged (it is about validators, which this mode does not add). `README.md` does not list modes or files, so it is unchanged.
+
+### Results
+
+- Baseline (3 sonnet agents, no mode; pages, art-app, email-app fixtures, single runs): all converted first without being asked. None split page gaps from behavior gaps or classified links against titles. None named a missing page as a target (pages run reported "nothing links to Sign In"; no Pricing or Forgot password?). art-app found the post-publish gap (unpublish, edit, delete) only as one item among 12 mixed with out-of-scope items (upload failure, limits, empty gallery, sign-in). email-app never named the receiving side. None offered design. Technical gaps (upload failure, limits) were raised.
+- GREEN (same fixtures plus a clean one, single runs): pages found Pricing and Forgot password? and dropped Home, Sign Up, Get started as resolved; titles were not candidates. art-app found edit draft, edit published, unpublish, delete, and who sees a draft, with 0 page candidates and no technical gaps. email-app found the receive gap, plus edit sent, delete or unsend sent, remove attachment, leave without sending, and one page candidate (where the user lands after Send). clean raised 0 candidates and invented nothing.
+- Gap closed in a fix round: the first pages run dropped Sign In and Create account submit buttons as having no target. The mode now collects a submit or primary action that leaves the page when the docs state or imply leaving but name no destination.
+- Ruling: implementers could not dispatch test agents, so the controller ran all baseline and GREEN runs.
+
+### Review rounds
+
+- Milestone 1 (Tasks 1 to 2): spec compliant; 1 Important fixed in 1 round (what "Not a navigation" and "Goes to an existing page" answers do). Review clean after the round.
+- Milestone 2 (Tasks 3 to 4): no milestone review; the final whole-branch review is the gate.
+
+### Not done
+
+- Single runs only; no repetitions on any fixture.
+- No formal pressure scenarios.
+- Interviews were simulated: the test agents had no interactive question tool, so every answer was Skip. A non-Skip path (for example "Goes to an existing page" as a correction) was not run.
+- The design offer was specified but never exercised: the "yes" path (draft `kind: screen` docs, `used_by` and Exits updates in citing docs) was not run. The agents asked the offer once after the interview and the answer was not simulated.
+- The submit-action rule (added in the fix round): exercised once (email-app Send); not exercised on the pages fixture.
+- Review focus items not exercised: an external URL or `mailto:` target (no fixture has one), a one-state entity, and a drafted missing page with no invention (the "yes" path).
+- Domains other than the fixtures (pages, art-app, email-app, clean).
+- Evaluation lenses were not run in the email-app run (the vague "short" confirmation duration was left alone).
+- No validators; the checks are prose.
+
+### Spec deviations
+
+- Additions beyond the spec: the submit-action collection rule, the external-URL exclusion, the one-state exclusion, "Not a navigation" drops the candidate with no edit, the `used_by`/Exits rewrite (where the id goes per kind of citing doc), and the `Entity:` question prefix.
+- Skip label: `Skip` here versus `Skip (decide later)` in `evaluate-flows.md`.
+
+### Deferred minors
+
+- `find-gaps.md:7`: dense; baseline `notes.md` is not per-run five-column.
+- `find-gaps.md:10`: "ask once, otherwise record nothing" does not say whether the candidate is dropped.
+- Steps 1 to 3 do not say how to handle screen Exits and flow transitions when only screen docs are supplied.
+- Skip the design offer when there are no Missing page answers; say whether it follows the pages interview or both.
+- Whether "not yet created" counts as a state for the one-state rule.
+- What to write for a "not allowed" answer, and which doc owns an entity shown in several docs.
+- How the user accepts or declines each part.

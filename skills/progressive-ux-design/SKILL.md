@@ -1,6 +1,6 @@
 ---
 name: progressive-ux-design
-description: Use when writing, refining, restructuring, reviewing, or checking user-experience flows for ambiguity, consistency, or completeness, user personas, single screens, or markdown UI wireframes, or when asked how a persona would react to, get bored by, or get stuck in a flow, when given an existing UX flow doc, user description, or market segmentation doc to put into a standard format, or when a flow needs more or less detail than its current layer.
+description: Use when writing, refining, restructuring, reviewing, or checking user-experience flows for ambiguity, consistency, or completeness, missing pages or behaviors, user personas, single screens, or markdown UI wireframes, or when asked how a persona would react to, get bored by, or get stuck in a flow, when given an existing UX flow doc, user description, or market segmentation doc to put into a standard format, or when a flow needs more or less detail than its current layer.
 ---
 
 # Progressive UX Design
@@ -20,10 +20,11 @@ Load ONLY the file for the chosen mode. Templates are the output shape; fill eve
 | `user-persona-template` | Who the user is, for judging flows. | `user-persona-template.md` |
 | `evaluate-flows` | Check one flow or a group, with or without screen docs, for ambiguity, consistency, completeness; small fixes, then a survey. | `evaluate-flows.md` (granularity follows each doc's `level`; also load that level's template, `screen-template.md` for a `kind: screen` doc, or `component-template.md` for a `kind: component` doc, when correcting) |
 | `simulate-flows` | Persona agents walk a flow; report, recommendations, update. Judges understanding, friction, delight, boredom, goal. | `simulate-flows.md`, then `simulate-report.md` |
+| `find-gaps` | Find missing pages (undefined link or action targets) and missing behaviors (state-dependent capabilities the docs leave undefined); interview, then offer to design pages. | `find-gaps.md` (also `screen-template.md` when drafting missing pages) |
 
-**Existing document not in template format** (flow, user description, segmentation, single-screen doc or wireframe): also load `convert-existing-doc.md`. It picks the mode unless the user named one.
+**Existing document not in template format** (flow, user description, segmentation, single-screen doc or wireframe): also load `convert-existing-doc.md` (not for find-gaps, which reads raw wireframes as is). It picks the mode unless the user named one.
 
-**Free text, no mode named:** choose by detail in the input. Journey or intent → high-level. Per-screen actions and reactions across connected screens → low-level. Description of people → persona. Description of one screen's elements and states, in isolation → screen. A reusable piece of a screen (header, tab bar) → component. State the choice in one line in your reply (not in the document).
+**Free text, no mode named:** choose by detail in the input. Journey or intent → high-level. Per-screen actions and reactions across connected screens → low-level. Description of people → persona. Description of one screen's elements and states, in isolation → screen. A reusable piece of a screen (header, tab bar) → component. Asked what is missing or undefined across screens or flows → find-gaps. State the choice in one line in your reply (not in the document).
 
 ## Rules for every output
 
