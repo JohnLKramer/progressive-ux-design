@@ -9,6 +9,7 @@ Input: one `kind: screen` or `kind: component` doc (and its markdown wireframe, 
 - **One state per file.** Default state SS1 unless the user names another. Screens: `<main data-screen="<id>" data-state="SS1">`. Components: `<section data-component="<id>">`, no state.
 - **Binding:** follow the HTML wireframe rule in `screen-template.md` (`data-el`, `data-action`, `data-exit`; never `id="El#"`). Container nodes that are not elements carry no marks; an element may sit inside another element. An element made of several parts (a tab bar of four tabs) puts `data-el` on the one node that wraps all its parts (`nav`); its parts carry only `data-action` or nothing.
 - **Tags follow role:** `button` for anything with an Action, `a` for navigation, a heading for a headline, text otherwise. A chip or label with no Action is plain text, not a button.
+- **Component variants:** a component doc's own HTML draws the component once (first Variants row's data, no `data-variant`). Instances per variant exist only in the screens that repeat it. Don't build a component HTML file just to show its variants; that copies the Variants table into a second place.
 - **Tests and tools** target elements as `[data-el="El3"]`, the same id as the Elements row, so a requirement on an element maps straight to a UI test. Never by tag, class, or text.
 - **Header comment:** one line naming the doc.
 - **Location:** where the user says, else `ux/mockups/<id>.html` (`<id>-<state>.html` for a non-default state).
