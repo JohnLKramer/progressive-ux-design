@@ -66,4 +66,5 @@ source: <original doc path or "free text">
 - Exits: if every path loops back to a home state, write `none (flow loops)`.
 - `Screen`: the id of the screen doc when the state is a screen with its own doc, else `none`. Never invent an id. `Shows` then holds only journey-specific variation; link the screen, don't copy its elements. `Screen / surface` keeps journey-specific surface text.
 - A transition may name a screen action as `<screen-id>.A<n>` in `User action` (e.g. `game-picks.A2`); the action must exist on that screen. The Exit a flow uses is the cited action's `Exit`; if named, it goes in `System reaction` as `via <exit-name>`. This flow decides `To`. The screen owns local behavior, the flow owns the journey.
+- A flow cites a screen element as `<screen-id>.El<n>` in `Shows` or prose (e.g. `game-picks.El3`); the element must exist on that screen. A flow never links an HTML file: the screen doc owns the path.
 - `personas: [unspecified]` when none is implied.

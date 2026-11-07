@@ -21,6 +21,7 @@ Best effort. The input may lack the detail the target needs; deliver a complete 
 | Edge-case table | Transitions (low); named branches or sentiment risk (high) |
 | Layout, copy, hit areas (when target is high) | Dropped from the output; mentioned once in the conversion note |
 | Wireframe (screen target) | Embedded `## Wireframe` block with callouts added by default; `wireframe:` relative path (file kept untouched) only if the user asks or the file is maintained separately |
+| HTML mockup (screen target) | Linked by `wireframe:` path, file left untouched; list the visible elements under `## Wireframe` as a key. `data-el` marks are added only if the user asks, or by `build-html.md` |
 | Elements visible in the wireframe | Elements with `El#` |
 | States the source shows or describes | States rows |
 | States beyond what the source shows | Open questions (`Origin: added`), never invented |
