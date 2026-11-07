@@ -178,3 +178,14 @@ Added `find-gaps.md`, routed from the skill (router row, free-text rule, descrip
 - Whether "not yet created" counts as a state for the one-state rule.
 - What to write for a "not allowed" answer, and which doc owns an entity shown in several docs.
 - How the user accepts or declines each part.
+
+## Session 7: HTML wireframes (2026-11-06)
+
+Screens and components can link an HTML mockup, bound to the doc by `data-el`. Added `build-html.md` (builds unstyled semantic HTML from a screen or component doc); `wireframe:` accepts `.html`; `data-action` and `data-exit` mark actions and exits; flows cite `<screen-id>.El<n>`; evaluate, convert, find-gaps and the router are updated. Design: `docs/element-references-proposal.md`. Later goal: `scratch/next-goal-design-system.md`.
+
+- Baseline (3 sonnet agents, game-picks, no guidance): three different front-matter keys (`html:`, `html:`, `mockup:`), one used `id` alone, all invented `data-action`/`data-exit`, all added a doc section or note, one added an id-overlay script, all guessed styling.
+- GREEN (same 3 prompts): all used `wireframe:`, 16 of 16 `data-el`, no `id="El#"`, no style or script, doc diff 1 to 3 lines. Checked by grep, not in a browser.
+- Not done: single runs; one fixture (screen only, SS1 only); components, non-default states, and flow `<screen-id>.El<n>` citations not exercised; evaluate checks not run; no pressure scenarios.
+- Seen in GREEN, unsettled: which node holds `data-el` for a group (run3 put it on `nav`); `source:` path rewrite; whether a pointer sentence under `## Wireframe` is allowed (run2 added one); heading levels and whether chips are buttons.
+- Second GREEN (2 runs, after adding four rules to `build-html.md`: `data-el` on the wrapping node for a multi-part element, tags follow role, doc edits limited to `wireframe:` plus Open questions, `source:` untouched): both runs had 16 of 16 `data-el`, no `id="El#"`, no style or script, chips as text, `data-el` on `nav`, and a doc diff of exactly one line. Still unsettled: placeholder label format for avatars, doctype/`lang`/`title` boilerplate, element order inside a card, and the doc naming no element locations (the `El#` ids are the only reference).
+- Component and evaluate runs (1 each): the component build followed `build-html.md` (root `data-component`, no `data-state`, 2 of 2 `data-el`, action and exit on the same node, doc diff one line). Evaluate on a screen with 4 seeded HTML defects (an `id="El3"`, a missing `data-el`, an extra `data-el`, an action not in the table) and a flow citing a missing element: all found, with the right counts. It also corrected the flow's dangling `game-picks.El99` to `El9`, which was a guess. Rule added to `evaluate-flows.md` (dangling element or action citation is a question, never a correction); that rule was not re-run. Not tested: a flow citation that resolves, a component slot in a screen's HTML, a non-default state file.

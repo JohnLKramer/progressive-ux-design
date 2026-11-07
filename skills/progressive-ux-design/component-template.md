@@ -10,6 +10,7 @@ title: <component name>
 status: draft
 purpose: <one sentence>
 source: <original doc path, or free text>
+wireframe: <relative path>      # optional; .html only; omit if inline under ## Wireframe
 used_by: [{<screen-id>: [<El-ids>]}]   # informational; may be empty
 ---
 
@@ -60,7 +61,7 @@ used_by: [{<screen-id>: [<El-ids>]}]   # informational; may be empty
 - Ownership: the component owns what its own actions do locally and which Exits it offers. The screen owns where the component sits and which screen states show it. The flow owns where an Exit leads.
 - Ids: elements `El1`.., actions `A1`.. Integers only (`El8`, `El9`, never `El8a`). Ids are stable; never renumber on edit. Screens cite actions as `<component-id>.A<n>`.
 - No states: don't add `SS#` rows. Differences by screen state go in `Variation` as text (`none` when the element never varies).
-- Wireframe, Actions, Exits and parameters follow `screen-template.md` (callouts inside the sketch, structure only, Actions name an Exit or `none`, Exits are named handoffs with no destinations, `| none | | |` if no exits, parameters not inlined in prose). No `wireframe:` path: the sketch is always inline.
+- Wireframe, Actions, Exits and parameters follow `screen-template.md` (callouts inside the sketch, structure only, Actions name an Exit or `none`, Exits are named handoffs with no destinations, `| none | | |` if no exits, parameters not inlined in prose). The sketch is inline, or a `wireframe:` path to an `.html` file built by `build-html.md`, which follows the HTML wireframe rule in `screen-template.md` (`data-el`, `data-action`, `data-exit`; ids are component-local; no `data-state`).
 - `used_by` is informational, may be empty, and screens win on conflict. Each entry maps a screen id to the bracketed `El` ids of the citing screen, e.g. `used_by: [{game-picks: [El1]}]`.
 - A component never cites another component (nesting is out of scope). A region you would nest becomes an element of this component.
 - Unknown copy, guards, or behavior become open questions (`Origin`, `Resolve in`), not invention. Copy: refer to a copy key or the source's text.

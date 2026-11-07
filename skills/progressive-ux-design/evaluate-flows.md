@@ -15,7 +15,7 @@ Screen docs (`kind: screen`):
 | Lens | Screen doc |
 |---|---|
 | **Ambiguity** | An element or state that reads two ways |
-| **Consistency** | Callouts vs Elements, `In states` vs States rows, Actions vs Exits; every parameter used is in the parameters table; a `wireframe:` path that does not resolve |
+| **Consistency** | Callouts vs Elements, `In states` vs States rows, Actions vs Exits; every parameter used is in the parameters table; a `wireframe:` path that does not resolve; for an `.html` wireframe (search it for `data-el=`, never read it whole): a `data-el` with no Elements row, an Elements row with no `data-el` (unless `not drawn`), a duplicate `data-el`, an `id="El#"` used as the binding, a `data-action` or `data-exit` value not in the Actions or Exits tables |
 | **Completeness** | Required states (default, loading, empty, error) present or `n/a, because ...`; every element appears in at least one state; every action has a trigger and a local result; every Exit declared |
 
 Component docs (`kind: component`):
@@ -23,7 +23,7 @@ Component docs (`kind: component`):
 | Lens | Component doc |
 |---|---|
 | **Ambiguity** | An element or action that reads two ways |
-| **Consistency** | Callouts vs Elements, Actions vs Exits, every parameter used is in the parameters table; a `used_by` or action citing another component (nesting is out of scope) |
+| **Consistency** | Callouts vs Elements (for `.html`, `data-el` vs Elements, `data-action` and `data-exit` vs Actions and Exits), every parameter used is in the parameters table; a `used_by` or action citing another component (nesting is out of scope) |
 | **Completeness** | Every action has a trigger and a local result; every Exit declared; no state rows (screens own states) |
 
 Cross-doc checks when a screen and a component are both given. Each failure is a cross-doc conflict in the summary:
@@ -37,7 +37,7 @@ The component owns what its own elements and actions do and which Exits it offer
 
 Cross-doc checks when a flow and a screen are both given. Each failure is a cross-doc conflict in the summary:
 - Every flow `Screen` id resolves to a supplied screen doc; an id whose doc is not supplied is not checked (cite the id only).
-- Every `<screen-id>.A<n>` a flow cites exists on that screen.
+- Every `<screen-id>.A<n>` and `<screen-id>.El<n>` a flow cites exists on that screen.
 - Every Exit a flow uses exists on that screen. A flow names the Exit in `System reaction` as `via <exit-name>`; a flow that names none uses the cited action's `Exit`.
 - A screen's `used_by` is compared only against the supplied flows. Add any supplied flow that cites the screen; never remove an entry naming a flow that was not supplied. An empty `used_by` with no supplied flow citing the screen is not a finding. A mismatch is a small correction (flows win): fix `used_by`, not a question.
 - A screen action's `Local result` does not contradict the flow transition's reaction (screen says "stays", flow says "goes to S3").
@@ -51,7 +51,7 @@ Technical gaps (network, exceptions, double-tap, offline) are out of scope at ev
 ## Procedure
 
 1. **Evaluate** silently, all three lenses, every doc.
-2. **Small corrections.** Apply one only when the doc itself supports exactly one reading (a dangling id, a term the doc defines used differently, a duplicate question, a return transition whose target the doc's own state text fixes, a screen `used_by` that disagrees with the flows citing it). If fixing means choosing what the user wants, it is a question, not a correction. List each correction in the summary.
+2. **Small corrections.** Apply one only when the doc itself supports exactly one reading (a dangling id, a term the doc defines used differently, a duplicate question, a return transition whose target the doc's own state text fixes, a screen `used_by` that disagrees with the flows citing it). If fixing means choosing what the user wants, it is a question, not a correction. A flow citing `<screen-id>.El<n>` or `<screen-id>.A<n>` that the screen does not have is always a question: more than one element may fit. List each correction in the summary.
 3. **Summary**, in this shape and nothing more:
    - One line per doc: `<id> (<level>): <n> ambiguity, <n> consistency, <n> completeness` (single-doc concerns only); a screen doc is `<id> (screen)`
    - Group-wide ambiguity and cross-doc conflicts: one count each

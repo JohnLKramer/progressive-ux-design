@@ -1,6 +1,6 @@
 # Finding gaps
 
-Input: screen, component, and flow docs, and raw wireframes, in any mix. Find what is absent, interview the user on each candidate, then offer to design missing pages. Raw wireframes are read as is; this mode never converts them (`convert-existing-doc.md` does). The three evaluation lenses of `evaluate-flows.md` are not run.
+Input: screen, component, and flow docs, and raw wireframes, in any mix. Find what is absent, interview the user on each candidate, then offer to design missing pages. Raw wireframes are read as is (an HTML file by searching for `data-el=`, `href=` and `data-exit=`, never whole); this mode never converts them (`convert-existing-doc.md` does). The three evaluation lenses of `evaluate-flows.md` are not run.
 
 ## Missing pages
 
