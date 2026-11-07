@@ -1,6 +1,6 @@
 # Building an HTML mockup
 
-Input: one `kind: screen` or `kind: component` doc (and its markdown wireframe, if any). Output: one `.html` file bound to the doc, and the doc's `wireframe:` path set. The doc is the source of truth; the HTML is derived from it and may be rebuilt when the doc changes.
+Input: one `kind: screen` or `kind: component` doc (and its markdown wireframe, "mockdown", if any; inline under `## Wireframe` or at a `wireframe:` `.md` path). Output: one `.html` file bound to the doc, and the doc's `wireframe:` path set. The doc is the source of truth; the HTML is derived from it and may be rebuilt when the doc changes.
 
 ## The file
 
@@ -13,9 +13,18 @@ Input: one `kind: screen` or `kind: component` doc (and its markdown wireframe, 
 - **Header comment:** one line naming the doc.
 - **Location:** where the user says, else `ux/mockups/<id>.html` (`<id>-<state>.html` for a non-default state).
 
+## From mockdown
+
+The mockdown gives layout; its `[El#]` callouts give the mapping. The cross-reference runs through the element id, never through position or text:
+
+- Each `[El3]` callout in the sketch becomes exactly one node `data-el="El3"` in the same region and order. A `[El2 component: <id>]` slot becomes one node `data-el="El2"` with nothing inside it marked.
+- A sketch with no callouts has no mapping. Add the `[El#]` marks to the inline sketch first, following `screen-template.md` (change nothing else; a linked `.md` is left untouched and the marks go in a key under `## Wireframe`). Match sketch pieces to Elements rows by the row's `Element` and `Shows` text. A piece you cannot match with confidence is an Open question, not a guess.
+- A piece in the sketch with no Elements row, or an Elements row with no piece in the sketch (other than `not drawn`), is a doc gap: leave it out of the HTML and raise an Open question.
+- Actions: a node that triggers a row of the Actions table gets `data-action` (and `data-exit`) from that row's `Element`, not from how the sketch looks.
+
 ## Procedure
 
-1. Read the doc. List every Elements row, action, and exit to mark.
+1. Read the doc and its mockdown. List every Elements row, callout, action, and exit to mark (see From mockdown).
 2. Write the HTML. Draw only what the doc shows or implies; a doc gap stays a gap (an Open question, `Origin: added`, `Resolve in: low`), not invented content, e.g. which tab is selected when the doc does not say.
 3. Set the doc's `wireframe:` to the relative path (resolving from the doc's own directory). Keep an existing inline sketch; the doc wins on conflict. The only doc edits are that front-matter line and an Open question if step 2 found a gap: no pointer sentence, no new section, no Conversion note change, and `source:` is left as written.
-4. Check by searching the file for `data-el=`, `data-action=`, `data-exit=`: each Elements row once; nothing extra; every action and exit value in the tables. Fix, then report in two lines: the file path, and any gaps raised.
+4. Check both directions by searching the file for `data-el=`, `data-action=`, `data-exit=`: each Elements row once; no `data-el` the table lacks; every `[El#]` callout has its node and every node has its callout; every action and exit value is in the tables, and every Actions row with an Element in this file has a node. Fix, then report in two lines: the file path, and any gaps raised.
