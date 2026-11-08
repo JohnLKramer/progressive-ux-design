@@ -6,7 +6,7 @@ to cover every single obscure edge case up front. So do it in layers.
 
 # Building HTML from a screen doc
 
-The `build-html` mode turns a screen or component doc into an unstyled HTML mockup. If the doc has a markdown wireframe ("mockdown"), that sketch sets the layout and its `[El3]` callouts set the mapping; the Elements, Actions and Exits tables supply the rest.
+The `build-html` mode turns a screen or component doc into an HTML mockup with a greyscale wireframe look. If the doc has a markdown wireframe ("mockdown"), that sketch sets the layout and its `[El3]` callouts set the mapping; the Elements, Actions and Exits tables supply the rest.
 
 The doc and the HTML cross-reference by id:
 

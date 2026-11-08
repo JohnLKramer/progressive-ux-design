@@ -5,7 +5,7 @@ description: Use when writing, refining, restructuring, reviewing, or checking u
 
 # Progressive UX Design
 
-UX is designed in layers. Each layer fixes only what that layer can decide; everything else becomes an **open question** for a later layer. Flow only: no visual aesthetics (built HTML mockups are unstyled; see `build-html.md`).
+UX is designed in layers. Each layer fixes only what that layer can decide; everything else becomes an **open question** for a later layer. Flow only: no visual aesthetics (built HTML mockups have a greyscale wireframe look with structural layout, no colour, fonts or imagery; see `build-html.md`).
 
 ## Route by mode
 
@@ -17,7 +17,7 @@ Load ONLY the file for the chosen mode. Templates are the output shape; fill eve
 | `low-level-flow-template` | Mostly-complete state machine of screens, user actions, system reactions. | `low-level-flow-template.md` |
 | `screen-template` | One screen: elements, states, actions, exits; may embed or link a markdown UI wireframe. Used by many flows. | `screen-template.md` |
 | `component-template` | One reusable piece of a screen (header, tab bar): elements, actions, exits, markdown sketch. Cited by many screens, written once. | `component-template.md` |
-| `build-html` | Build the HTML mockup of one screen or component doc (from its markdown wireframe, "mockdown", when it has one): unstyled semantic HTML bound to the doc by `data-el`, matching the sketch's `[El#]` callouts. | `build-html.md` (also `screen-template.md` or `component-template.md`) |
+| `build-html` | Build the HTML mockup of one screen or component doc (from its markdown wireframe, "mockdown", when it has one): semantic HTML with the mockdown's layout (wireframe look), bound to the doc by `data-el`, matching the sketch's `[El#]` callouts. | `build-html.md` (also `screen-template.md` or `component-template.md`) |
 | `user-persona-template` | Who the user is, for judging flows. | `user-persona-template.md` |
 | `evaluate-flows` | Check one flow or a group, with or without screen docs, for ambiguity, consistency, completeness; small fixes, then a survey. | `evaluate-flows.md` (granularity follows each doc's `level`; also load that level's template, `screen-template.md` for a `kind: screen` doc, or `component-template.md` for a `kind: component` doc, when correcting) |
 | `simulate-flows` | Persona agents walk a flow; report, recommendations, update. Judges understanding, friction, delight, boredom, goal. | `simulate-flows.md`, then `simulate-report.md` |
