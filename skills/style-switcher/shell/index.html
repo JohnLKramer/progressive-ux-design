@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Style switcher</title>
+<link rel="stylesheet" href="/shell/shell.css">
+</head>
+<body data-page="" data-style="" data-mode="2" data-layout-applied="false" data-ready="false">
+<header id="bar">
+  <button id="prev" type="button" aria-label="Previous page">&larr;</button>
+  <button id="next" type="button" aria-label="Next page">&rarr;</button>
+  <span id="counter"></span>
+  <span id="title"></span>
+  <label>Style
+    <select id="style-select"><option value="">Unstyled</option></select>
+  </label>
+  <button id="mode-toggle" type="button" aria-pressed="false"></button>
+  <label>Width
+    <select id="width-select">
+      <option value="">Fit window</option>
+      <option value="1440">1440</option>
+      <option value="1280">1280</option>
+      <option value="1024">1024</option>
+      <option value="768">768</option>
+      <option value="390">390</option>
+    </select>
+  </label>
+  <a id="notes-link" href="#" target="_blank" rel="noopener" hidden>Notes</a>
+</header>
+<div id="layout-note" role="status" hidden>No layout in this style; showing style only (one column). Mode 2 changes nothing for it.</div>
+<div id="error-banner" role="alert" hidden></div>
+<!-- Deliberately not sandboxed: the style swap needs same-origin access to the page document; pages are script-stripped by strip_page. -->
+<iframe id="frame" title="Page preview"></iframe>
+<script src="/shell/shell.js"></script>
+</body>
+</html>
