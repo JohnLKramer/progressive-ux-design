@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Class finder - mockup</title>
+</head>
+<body>
+<header data-el="El1">
+<h1>Class finder</h1>
+<nav>
+<a href="#" data-action="go-home" data-exit="home">Home</a>
+<a href="#" data-action="go-bookings" data-exit="bookings">My bookings</a>
+<a href="#" data-action="go-profile" data-exit="profile">Profile</a>
+</nav>
+</header>
+<section class="hero" data-el="El2">
+<h2>Find your next class</h2>
+<p>Search studios near you and book in two taps.</p>
+<button data-action="open-search" data-exit="search">Search classes</button>
+</section>
+<section data-el="El3">
+<h2>Popular today</h2>
+<ul>
+<li data-el="El4"><h3>Morning Flow</h3><p>Yoga, 7:00 AM</p><button data-action="book-class" data-exit="confirm">Book</button></li>
+<li data-el="El5"><h3>Lunch Break Ride</h3><p>Cycling, 12:15 PM</p><button data-action="book-class" data-exit="confirm">Book</button></li>
+</ul>
+</section>
+<form data-el="El6" data-action="submit-alert">
+<label for="zip">Zip code</label>
+<input id="zip" name="zip" type="text">
+<button type="submit" data-action="save-alert" data-exit="alerts">Save alert</button>
+</form>
+<footer>
+<p>Help center and terms</p>
+<a href="#" data-action="go-help" data-exit="help">Help</a>
+</footer>
+</body>
+</html>

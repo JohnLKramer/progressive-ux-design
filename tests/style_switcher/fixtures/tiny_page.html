@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Riverside Studio - Classes</title>
+<link rel="stylesheet" href="https://cdn.example.com/site.css">
+<style>.card { border: 1px solid #ccc; padding: 8px; }</style>
+<script>window.dataLayer = window.dataLayer || [];</script>
+</head>
+<body class="page page-classes">
+<header class="site-header"><h1 class="logo">Riverside Studio</h1>
+<nav class="main-nav"><a class="nav-link" href="/classes">Classes</a> <a class="nav-link" href="/teachers">Teachers</a> <a class="nav-link" href="/contact">Contact</a></nav></header>
+<main class="content">
+<h2>This week's classes</h2>
+<ul class="card-list">
+<li class="card" data-el="El1"><h3>Morning Flow</h3><p>A gentle 45 minute yoga practice.</p><a class="btn" href="/classes/morning-flow">View class</a></li>
+<li class="card"><h3>Lunch Break Ride</h3><p>High energy indoor cycling.</p><a class="btn" href="/classes/lunch-ride">View class</a></li>
+<li class="card"><h3>Evening Stretch</h3><p>Wind down with slow mobility work.</p><button class="btn" onclick="track('stretch')">Reserve a spot</button></li>
+</ul>
+<form class="signup" action="/subscribe" method="post">
+<label for="email">Email address</label>
+<input id="email" name="email" type="email">
+<button type="submit">Subscribe</button>
+</form>
+</main>
+<footer class="site-footer"><p>Copyright Riverside Studio</p></footer>
+<img src="https://tracker.example.com/pixel.gif" width="1" height="1" alt="">
+</body>
+</html>

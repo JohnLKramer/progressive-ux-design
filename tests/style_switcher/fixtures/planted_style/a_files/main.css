@@ -1,0 +1,16 @@
+@font-face { font-family: "Planted Sans"; src: url(planted-sans.woff2) format("woff2"); }
+:root { --planted-accent: #ffb300; }
+body { font-family: "Planted Sans", sans-serif; background: #f4f1ea; color: #222222; margin: 0; }
+header { background: #7a1fa2; color: #ffffff; padding: 16px 24px; }
+nav a { color: #ffb300; margin-right: 16px; text-decoration: none; }
+.hero { background: #00897b; color: #ffffff; padding: 48px 24px; border-radius: 14px; box-shadow: 0 6px 18px rgba(20, 10, 40, 0.25); }
+.hero h1 { color: #ffb300; }
+section { padding: 24px; background: #f4f1ea; }
+section h2 { color: #7a1fa2; border-bottom: 2px solid #00897b; }
+.cards { display: flex; gap: 16px; list-style: none; padding: 0; }
+.card { background: #ffffff; border: 1px solid #cccccc; border-radius: 14px; padding: 16px; box-shadow: 0 6px 18px rgba(20, 10, 40, 0.25); }
+.card h3 { color: #00897b; }
+button { background: #ffb300; color: #222222; border: 0; border-radius: 14px; padding: 8px 20px; box-shadow: 0 6px 18px rgba(20, 10, 40, 0.25); font-family: "Planted Sans", sans-serif; }
+input { border: 1px solid #7a1fa2; border-radius: 14px; padding: 8px; background: #ffffff; color: #222222; }
+footer { background: #7a1fa2; color: #f4f1ea; padding: 16px 24px; border-radius: 14px; }
+footer a { color: #ffb300; }

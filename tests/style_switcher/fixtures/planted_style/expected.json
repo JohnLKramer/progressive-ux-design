@@ -1,0 +1,15 @@
+{
+  "colors": [
+    "#7a1fa2",
+    "#ffb300",
+    "#00897b",
+    "#f4f1ea"
+  ],
+  "font_family": "Planted Sans",
+  "radius": "14px",
+  "shadow": "0 6px 18px rgba(20, 10, 40, 0.25)",
+  "custom_property": {
+    "--planted-accent": "#ffb300"
+  },
+  "font_file": "a_files/planted-sans.woff2"
+}
