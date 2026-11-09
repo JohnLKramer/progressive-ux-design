@@ -339,3 +339,154 @@ def test_check_malformed_snapshot_raises(ws):
     (dest / "snapshot.json").write_text("{not json", encoding="utf-8")
     with pytest.raises(ValueError):
         gates.check(dest, "structural")
+
+
+# --- restore -------------------------------------------------------------
+
+
+def _tree(root):
+    root = Path(root)
+    if root.is_file():
+        return {"": root.read_bytes()}
+    return {p.relative_to(root).as_posix(): p.read_bytes() for p in sorted(root.rglob("*")) if p.is_file()}
+
+
+def _assert_roots_match_snapshot(dest):
+    data = json.loads((dest / "snapshot.json").read_text(encoding="utf-8"))
+    for root in data["roots"]:
+        assert _tree(root["path"]) == _tree(dest / root["copy"]), root["path"]
+
+
+def test_restore_makes_roots_identical_and_removes_added_files(ws, tmp_path):
+    doc = tmp_path / "design.md"
+    doc.write_text("# doc\n", encoding="utf-8")
+    dest = _snap(ws, cross_style="b", doc=doc)
+    before = {p: _tree(ws / p) for p in ("pages/demo", "styles/a", "styles/b")}
+
+    _edit(ws / PAGE, ' data-el="El5"', "")
+    (ws / "pages" / "demo" / "added.html").write_text("x", encoding="utf-8")
+    (ws / "pages" / "demo" / "sub").mkdir()
+    (ws / "pages" / "demo" / "sub" / "deep.txt").write_text("d", encoding="utf-8")
+    (ws / "styles" / "a" / "style.css").write_text("body{}", encoding="utf-8")
+    (ws / "styles" / "a" / "extra.css").write_text("x{}", encoding="utf-8")
+    (ws / "styles" / "b" / "layout.css").unlink()
+    doc.write_text("# doc v2\n", encoding="utf-8")
+
+    gates.restore(dest)
+
+    _assert_roots_match_snapshot(dest)
+    assert {p: _tree(ws / p) for p in before} == before
+    assert not (ws / "pages" / "demo" / "added.html").exists()
+    assert not (ws / "pages" / "demo" / "sub").exists()
+    assert doc.read_text(encoding="utf-8") == "# doc\n"
+    assert gates.check(dest, "structural") == []
+    assert gates.check(dest, "style") == []
+    assert sorted(p.name for p in (ws / "pages").iterdir()) == ["demo"]
+
+
+def test_restore_is_repeatable(ws):
+    dest = _snap(ws)
+    (ws / "styles" / "a" / "style.css").write_text("body{}", encoding="utf-8")
+    gates.restore(dest)
+    gates.restore(dest)
+    _assert_roots_match_snapshot(dest)
+
+
+def test_restore_recreates_deleted_root_and_replaces_file_root(ws):
+    dest = _snap(ws)
+    import shutil
+
+    shutil.rmtree(str(ws / "styles" / "a"))
+    shutil.rmtree(str(ws / "pages" / "demo"))
+    (ws / "pages" / "demo").write_text("now a file", encoding="utf-8")
+    gates.restore(dest)
+    _assert_roots_match_snapshot(dest)
+
+
+def test_restore_leaves_files_outside_roots_alone(ws):
+    other = ws / "pages" / "other"
+    other.mkdir()
+    (other / "index.html").write_text("<p>other</p>", encoding="utf-8")
+    dest = _snap(ws)
+    (other / "index.html").write_text("<p>changed</p>", encoding="utf-8")
+    (ws / "styles" / "b" / "style.css").write_text("b{}", encoding="utf-8")
+    (ws / ".design-refine" / "log.txt").write_text("l", encoding="utf-8")
+    gates.restore(dest)
+    assert (other / "index.html").read_text(encoding="utf-8") == "<p>changed</p>"
+    assert (ws / "styles" / "b" / "style.css").read_text(encoding="utf-8") == "b{}"
+    assert (ws / ".design-refine" / "log.txt").is_file()
+    assert (dest / "snapshot.json").is_file()
+
+
+def test_restore_missing_snapshot_raises(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        gates.restore(tmp_path)
+
+
+@pytest.mark.parametrize("payload", ["{not json", "[]", '{"version": 1}', '{"version": 2}'])
+def test_restore_malformed_snapshot_raises_and_touches_nothing(ws, payload):
+    dest = _snap(ws)
+    (ws / "styles" / "a" / "extra.css").write_text("x{}", encoding="utf-8")
+    (dest / "snapshot.json").write_text(payload, encoding="utf-8")
+    with pytest.raises(ValueError):
+        gates.restore(dest)
+    assert (ws / "styles" / "a" / "extra.css").is_file()
+
+
+def _tamper(dest, change):
+    path = dest / "snapshot.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    change(data)
+    path.write_text(json.dumps(data), encoding="utf-8")
+
+
+def test_restore_refuses_root_outside_workspace(ws, tmp_path):
+    victim = tmp_path / "victim"
+    victim.mkdir()
+    (victim / "keep.txt").write_text("keep", encoding="utf-8")
+    dest = _snap(ws)
+    _tamper(dest, lambda d: d["roots"][0].update(path=str(victim)))
+    with pytest.raises(ValueError):
+        gates.restore(dest)
+    assert (victim / "keep.txt").read_text(encoding="utf-8") == "keep"
+
+
+def test_restore_refuses_traversal_in_recorded_names(ws, tmp_path):
+    dest = _snap(ws)
+    _tamper(dest, lambda d: d.update(slug=".."))
+    with pytest.raises(ValueError):
+        gates.restore(dest)
+    assert (ws / "pages" / "demo" / "index.html").is_file()
+
+
+def test_restore_refuses_extra_root(ws, tmp_path):
+    dest = _snap(ws)
+    _tamper(dest, lambda d: d["roots"].append({"path": str(ws), "kind": "dir", "copy": "roots/pages"}))
+    with pytest.raises(ValueError):
+        gates.restore(dest)
+    assert (ws / "styles" / "b").is_dir()
+
+
+def test_restore_refuses_root_symlinked_outside_workspace(ws, tmp_path):
+    import shutil
+
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "keep.txt").write_text("keep", encoding="utf-8")
+    dest = _snap(ws)
+    shutil.rmtree(str(ws / "styles" / "a"))
+    (ws / "styles" / "a").symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ValueError):
+        gates.restore(dest)
+    assert (outside / "keep.txt").read_text(encoding="utf-8") == "keep"
+
+
+def test_restore_with_missing_copy_raises_before_touching_anything(ws):
+    import shutil
+
+    dest = _snap(ws)
+    _edit(ws / PAGE, "Popular today", "Popular now")
+    shutil.rmtree(str(dest / "roots" / "styles" / "a"))
+    with pytest.raises(FileNotFoundError):
+        gates.restore(dest)
+    assert "Popular now" in (ws / PAGE).read_text(encoding="utf-8")

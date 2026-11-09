@@ -290,7 +290,9 @@ def _rel_in_scope(rel: str, kind: str, data: dict, workspace: Path) -> bool:
         if rel.startswith("pages/%s/" % data["slug"]):
             return True
         doc = data["doc"]
-        return doc is not None and _is_within(Path(doc), workspace) and Path(doc).relative_to(workspace).as_posix() == rel
+        if doc is None or not _is_within(Path(doc), workspace):
+            return False
+        return Path(doc).relative_to(workspace).as_posix() == rel
     return rel.startswith("styles/%s/" % data["style_id"])
 
 
@@ -347,3 +349,48 @@ def check(snapshot_dir: Path, kind: str) -> List[Problem]:
 
     problems.extend(validate_style(workspace / "styles" / data["style_id"]))
     return problems
+
+
+def _remove(path: Path) -> None:
+    if path.is_symlink() or path.is_file():
+        path.unlink()
+    elif path.is_dir():
+        shutil.rmtree(str(path))
+    elif os.path.lexists(str(path)):
+        raise OSError("cannot remove %s: not a file, directory or symlink" % path)
+
+
+def restore(snapshot_dir: Path) -> None:
+    """Replace every recorded root with its snapshot copy. Touches nothing else.
+
+    Everything is validated before the first deletion: a bad snapshot.json, a root that
+    resolves outside the workspace, or a missing copy raises with the workspace unchanged.
+    """
+    snapshot_dir = Path(snapshot_dir).resolve()
+    data = _load_snapshot(snapshot_dir)
+    roots_dir = snapshot_dir / "roots"
+    plan = []  # type: List[Tuple[Path, Path, str]]
+    for root in data["roots"]:
+        copy = (snapshot_dir / root["copy"]).resolve()
+        if not _is_within(copy, roots_dir):
+            raise SnapshotError("copy %s for root %s is outside %s" % (copy, root["path"], roots_dir))
+        if root["kind"] == "dir" and not copy.is_dir():
+            raise FileNotFoundError("snapshot copy %s of root %s is missing" % (copy, root["path"]))
+        if root["kind"] == "file" and not copy.is_file():
+            raise FileNotFoundError("snapshot copy %s of root %s is missing" % (copy, root["path"]))
+        target = Path(root["path"])
+        tmp = target.with_name("." + target.name + ".restore-tmp")
+        if os.path.lexists(str(tmp)):
+            raise FileExistsError("restore scratch path %s already exists; remove it by hand" % tmp)
+        plan.append((copy, target, root["kind"]))
+
+    for copy, target, kind in plan:
+        # Copy beside the target first, so a failed copy leaves the target as it was.
+        tmp = target.with_name("." + target.name + ".restore-tmp")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if kind == "dir":
+            shutil.copytree(str(copy), str(tmp), symlinks=True)
+        else:
+            shutil.copy2(str(copy), str(tmp))
+        _remove(target)
+        os.replace(str(tmp), str(target))
