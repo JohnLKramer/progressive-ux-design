@@ -28,6 +28,8 @@ for _p in (_HERE, _HERE.parent.parent / "style-switcher" / "scripts"):
         sys.path.insert(0, str(_p))
 
 from problems import Problem  # noqa: E402
+from validate_page import collect_data_el, validate_page  # noqa: E402
+from validate_style import validate_style  # noqa: E402
 
 MARKER_ATTRS = ("data-el", "data-action", "data-exit", "data-variant")
 
@@ -215,3 +217,133 @@ def snapshot(
     }
     (dest / SNAPSHOT_FILE).write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return data
+
+
+class SnapshotError(ValueError):
+    """snapshot.json is malformed or does not describe a snapshot this module would write."""
+
+
+_KINDS = ("structural", "style")
+
+
+def _load_snapshot(snapshot_dir: Path) -> dict:
+    """Read and validate snapshot.json. Raises FileNotFoundError or SnapshotError; never guesses."""
+    path = Path(snapshot_dir) / SNAPSHOT_FILE
+    if not path.is_file():
+        raise FileNotFoundError("snapshot file %s does not exist" % path)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise SnapshotError("%s is not valid JSON: %s" % (path, exc))
+    if not isinstance(data, dict):
+        raise SnapshotError("%s must hold an object" % path)
+    if data.get("version") != SNAPSHOT_VERSION:
+        raise SnapshotError("%s has version %r, expected %d" % (path, data.get("version"), SNAPSHOT_VERSION))
+    try:
+        workspace_str = data["workspace"]
+        slug, style_id = data["slug"], data["style_id"]
+        cross_style, doc = data["cross_style"], data["doc"]
+        roots, hashes, doc_sha = data["roots"], data["hashes"], data["doc_sha256"]
+    except KeyError as exc:
+        raise SnapshotError("%s is missing key %s" % (path, exc))
+    try:
+        _check_name("slug", slug)
+        _check_name("style_id", style_id)
+        if cross_style is not None:
+            _check_name("cross_style", cross_style)
+    except ValueError as exc:
+        raise SnapshotError("%s: %s" % (path, exc))
+    if not isinstance(workspace_str, str) or not Path(workspace_str).is_absolute():
+        raise SnapshotError("%s: workspace must be an absolute path, got %r" % (path, workspace_str))
+    workspace = Path(workspace_str)
+    if not workspace.is_dir():
+        raise SnapshotError("%s: workspace %s is not a directory" % (path, workspace))
+    if doc is not None and (not isinstance(doc, str) or not Path(doc).is_absolute()):
+        raise SnapshotError("%s: doc must be null or an absolute path, got %r" % (path, doc))
+    if (doc is None) != (doc_sha is None):
+        raise SnapshotError("%s: doc and doc_sha256 must both be set or both be null" % path)
+    if not isinstance(hashes, dict) or not all(
+        isinstance(k, str) and isinstance(v, str) for k, v in hashes.items()
+    ):
+        raise SnapshotError("%s: hashes must map paths to sha256 strings" % path)
+    expected = _expected_roots(workspace, slug, style_id, cross_style, doc)
+    if roots != expected:
+        raise SnapshotError("%s: roots %r do not match the expected roots %r" % (path, roots, expected))
+    # Symlinks could point a root elsewhere: every root must really resolve inside the
+    # workspace (outside .design-refine), except the recorded doc file.
+    work_dir = workspace.resolve() / WORK_DIR
+    for root in roots:
+        resolved = Path(root["path"]).resolve()
+        if root["kind"] == "file" and root["path"] == doc and resolved == Path(doc):
+            continue
+        if (
+            resolved == workspace.resolve()
+            or not _is_within(resolved, workspace.resolve())
+            or _is_within(resolved, work_dir)
+        ):
+            raise SnapshotError("%s: root %s resolves to %s, outside the workspace" % (path, root["path"], resolved))
+    return data
+
+
+def _rel_in_scope(rel: str, kind: str, data: dict, workspace: Path) -> bool:
+    if kind == "structural":
+        if rel.startswith("pages/%s/" % data["slug"]):
+            return True
+        doc = data["doc"]
+        return doc is not None and _is_within(Path(doc), workspace) and Path(doc).relative_to(workspace).as_posix() == rel
+    return rel.startswith("styles/%s/" % data["style_id"])
+
+
+def _rel_in_roots(rel: str, data: dict, workspace: Path) -> bool:
+    for root in data["roots"]:
+        path = Path(root["path"])
+        if not _is_within(path, workspace):
+            continue
+        root_rel = path.relative_to(workspace).as_posix()
+        if rel == root_rel or (root["kind"] == "dir" and rel.startswith(root_rel + "/")):
+            return True
+    return False
+
+
+def _out_of_scope(where: str, what: str, kind: str, revertable: bool) -> Problem:
+    tail = (
+        "restore will revert it"
+        if revertable
+        else "it lies outside the snapshot roots and cannot be auto-reverted"
+    )
+    return Problem("file-out-of-scope", where, "%s, outside the files a %s fix may touch; %s" % (what, kind, tail))
+
+
+def check(snapshot_dir: Path, kind: str) -> List[Problem]:
+    """Gate a fix: allowed files, marker diff, page validator, style validator, in that order."""
+    if kind not in _KINDS:
+        raise ValueError("kind must be one of %s, got %r" % (", ".join(_KINDS), kind))
+    snapshot_dir = Path(snapshot_dir)
+    data = _load_snapshot(snapshot_dir)
+    workspace = Path(data["workspace"])
+    problems = []  # type: List[Problem]
+
+    before, after = data["hashes"], _hash_workspace(workspace)
+    for rel in sorted(set(before) | set(after)):
+        if before.get(rel) == after.get(rel) or _rel_in_scope(rel, kind, data, workspace):
+            continue
+        what = "added" if rel not in before else "removed" if rel not in after else "changed"
+        problems.append(_out_of_scope(rel, what, kind, _rel_in_roots(rel, data, workspace)))
+
+    doc = data["doc"]
+    if doc is not None and not _is_within(Path(doc), workspace) and kind != "structural":
+        doc_path = Path(doc)
+        current = _hash_file(doc_path) if doc_path.is_file() else None
+        if current != data["doc_sha256"]:
+            problems.append(_out_of_scope(doc, "removed" if current is None else "changed", kind, True))
+
+    page = workspace / "pages" / data["slug"] / "index.html"
+    page_before = snapshot_dir / "roots" / "pages" / data["slug"] / "index.html"
+    if page.is_file():
+        problems.extend(marker_diff(page_before, page))
+        problems.extend(validate_page(page, source_el_ids=collect_data_el(page_before)))
+    else:
+        problems.append(Problem("page-missing", str(page), "the page was deleted"))
+
+    problems.extend(validate_style(workspace / "styles" / data["style_id"]))
+    return problems

@@ -166,3 +166,176 @@ def test_snapshot_rejects_dest_in_workspace_outside_design_refine(ws):
 def test_snapshot_dest_outside_workspace_is_allowed(ws, tmp_path):
     gates.snapshot(ws, "demo", "a", tmp_path / "elsewhere")
     assert (tmp_path / "elsewhere" / "snapshot.json").is_file()
+
+
+# --- check ---------------------------------------------------------------
+
+PAGE = Path("pages") / "demo" / "index.html"
+
+
+def _edit(path, old, new):
+    text = path.read_text(encoding="utf-8")
+    assert old in text
+    path.write_text(text.replace(old, new), encoding="utf-8")
+
+
+def _codes(problems):
+    return [p.code for p in problems]
+
+
+def test_untouched_workspace_passes_both_kinds(ws):
+    dest = _snap(ws, cross_style="b")
+    assert gates.check(dest, "structural") == []
+    assert gates.check(dest, "style") == []
+
+
+def test_structural_kind_allows_page_edit(ws):
+    dest = _snap(ws)
+    _edit(ws / PAGE, "<h2>Popular today</h2>", '<div class="wrap"><h2>Popular today</h2></div>')
+    (ws / "pages" / "demo" / "extra.css").write_text("x{}", encoding="utf-8")
+    assert gates.check(dest, "structural") == []
+
+
+def test_style_kind_allows_primary_style_edit(ws):
+    dest = _snap(ws)
+    (ws / "styles" / "a" / "style.css").write_text("body{color:#000}\n", encoding="utf-8")
+    assert gates.check(dest, "style") == []
+
+
+def test_style_kind_rejects_page_edit(ws):
+    dest = _snap(ws)
+    _edit(ws / PAGE, "Popular today", "Popular now")
+    problems = gates.check(dest, "style")
+    assert _codes(problems) == ["file-out-of-scope"]
+    assert problems[0].where == "pages/demo/index.html"
+    assert "cannot be auto-reverted" not in problems[0].message
+
+
+def test_structural_kind_rejects_style_edit(ws):
+    dest = _snap(ws)
+    (ws / "styles" / "a" / "style.css").write_text("body{color:#000}\n", encoding="utf-8")
+    problems = gates.check(dest, "structural")
+    assert _codes(problems) == ["file-out-of-scope"]
+    assert problems[0].where == "styles/a/style.css"
+    assert "cannot be auto-reverted" not in problems[0].message
+
+
+def test_style_kind_rejects_cross_style_edit_but_it_is_revertable(ws):
+    dest = _snap(ws, cross_style="b")
+    (ws / "styles" / "b" / "style.css").write_text("body{color:#000}\n", encoding="utf-8")
+    problems = gates.check(dest, "style")
+    assert _codes(problems) == ["file-out-of-scope"]
+    assert "cannot be auto-reverted" not in problems[0].message
+
+
+def test_edit_to_other_page_is_out_of_scope_and_unrevertable(ws):
+    other = ws / "pages" / "other"
+    other.mkdir()
+    (other / "index.html").write_text("<p>other</p>", encoding="utf-8")
+    dest = _snap(ws)
+    (other / "index.html").write_text("<p>changed</p>", encoding="utf-8")
+    for kind in ("structural", "style"):
+        problems = gates.check(dest, kind)
+        assert _codes(problems) == ["file-out-of-scope"]
+        assert problems[0].where == "pages/other/index.html"
+        assert "cannot be auto-reverted" in problems[0].message
+
+
+def test_added_and_removed_files_outside_roots_are_out_of_scope(ws):
+    (ws / "README.txt").write_text("r", encoding="utf-8")
+    dest = _snap(ws)
+    (ws / "README.txt").unlink()
+    (ws / "new.txt").write_text("n", encoding="utf-8")
+    problems = gates.check(dest, "structural")
+    assert sorted(p.where for p in problems) == ["README.txt", "new.txt"]
+    assert set(_codes(problems)) == {"file-out-of-scope"}
+    assert all("cannot be auto-reverted" in p.message for p in problems)
+    assert "removed" in [p for p in problems if p.where == "README.txt"][0].message
+    assert "added" in [p for p in problems if p.where == "new.txt"][0].message
+
+
+def test_design_refine_dir_changes_are_ignored(ws):
+    dest = _snap(ws)
+    (ws / ".design-refine" / "log.txt").write_text("l", encoding="utf-8")
+    assert gates.check(dest, "structural") == []
+
+
+def test_doc_inside_workspace_is_in_scope_for_structural_only(ws):
+    doc = ws / "design.md"
+    doc.write_text("# doc\n", encoding="utf-8")
+    dest = _snap(ws, doc=doc)
+    doc.write_text("# doc v2\n", encoding="utf-8")
+    assert gates.check(dest, "structural") == []
+    problems = gates.check(dest, "style")
+    assert _codes(problems) == ["file-out-of-scope"]
+    assert problems[0].where == "design.md"
+    assert "cannot be auto-reverted" not in problems[0].message
+
+
+def test_doc_outside_workspace_is_in_scope_for_structural_only(ws, tmp_path):
+    doc = tmp_path / "design.md"
+    doc.write_text("# doc\n", encoding="utf-8")
+    dest = _snap(ws, doc=doc)
+    doc.write_text("# doc v2\n", encoding="utf-8")
+    assert gates.check(dest, "structural") == []
+    problems = gates.check(dest, "style")
+    assert _codes(problems) == ["file-out-of-scope"]
+    assert problems[0].where == str(doc.resolve())
+
+
+def test_marker_loss_fails_check(ws):
+    dest = _snap(ws)
+    _edit(ws / PAGE, ' data-variant="primary"', "")
+    _edit(ws / PAGE, ' data-el="El5"', "")
+    problems = gates.check(dest, "structural")
+    assert _codes(problems) == ["marker-lost", "marker-lost", "lost-data-el"]
+    assert any('data-variant="primary"' in p.message for p in problems)
+
+
+def test_page_validator_problems_are_reported(ws):
+    dest = _snap(ws)
+    _edit(ws / PAGE, '<section class="hero"', '<section style="color:red" class="hero"')
+    assert _codes(gates.check(dest, "structural")) == ["inline-style"]
+
+
+def test_style_validator_problems_are_reported(ws):
+    dest = _snap(ws)
+    (ws / "styles" / "a" / "layout.css").write_text("section{display:none}\n", encoding="utf-8")
+    assert _codes(gates.check(dest, "style")) == ["layout-hides"]
+
+
+def test_check_runs_gates_in_order(ws):
+    dest = _snap(ws)
+    _edit(ws / PAGE, ' data-el="El5"', ' style="x:y"')
+    (ws / "styles" / "a" / "tokens.json").write_text("{}", encoding="utf-8")
+    assert _codes(gates.check(dest, "structural")) == [
+        "file-out-of-scope",
+        "marker-lost",
+        "inline-style",
+        "lost-data-el",
+        "bad-tokens",
+    ]
+
+
+def test_deleted_page_is_reported_not_raised(ws):
+    dest = _snap(ws)
+    (ws / PAGE).unlink()
+    assert _codes(gates.check(dest, "structural")) == ["page-missing"]
+
+
+def test_check_rejects_unknown_kind(ws):
+    dest = _snap(ws)
+    with pytest.raises(ValueError):
+        gates.check(dest, "layout")
+
+
+def test_check_missing_snapshot_raises(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        gates.check(tmp_path, "structural")
+
+
+def test_check_malformed_snapshot_raises(ws):
+    dest = _snap(ws)
+    (dest / "snapshot.json").write_text("{not json", encoding="utf-8")
+    with pytest.raises(ValueError):
+        gates.check(dest, "structural")
