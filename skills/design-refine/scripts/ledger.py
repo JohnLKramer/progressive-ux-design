@@ -9,6 +9,7 @@ Finding statuses: open, retry, attempted, fixed, unresolved, needs_you, dropped.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -327,3 +328,68 @@ def report(ledger: dict) -> str:
     lines += _section("Needs you", needs_you)
     lines += _section("Attempts per finding", attempts)
     return "\n".join(lines)
+
+
+def _load_critique(path: Path) -> list:
+    if not path.is_file():
+        raise _fail("critique-missing", str(path), "critique file does not exist")
+    try:
+        return json.loads(path.read_text())
+    except ValueError as exc:
+        raise _fail("critique-invalid", str(path), "not valid JSON: %s" % exc)
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="ledger.py")
+    sub = parser.add_subparsers(dest="command", required=True)
+    p = sub.add_parser("init")
+    p.add_argument("ledger", type=Path)
+    p.add_argument("--max-iterations", type=int, default=5)
+    p.add_argument("--bar", default="P2")
+    p = sub.add_parser("ingest")
+    p.add_argument("ledger", type=Path)
+    p.add_argument("critique", type=Path)
+    for name in ("next", "status", "report"):
+        sub.add_parser(name).add_argument("ledger", type=Path)
+    p = sub.add_parser("attempt")
+    p.add_argument("ledger", type=Path)
+    p.add_argument("id")
+    p.add_argument("--approach", required=True)
+    p.add_argument("--result", required=True)
+    return parser
+
+
+def _dispatch(args: argparse.Namespace) -> str:
+    def dump(value: object) -> str:
+        return json.dumps(value, indent=2)
+
+    if args.command == "init":
+        return dump(init_ledger(args.ledger, args.max_iterations, args.bar))
+    if args.command == "ingest":
+        return dump(ingest(args.ledger, _load_critique(args.critique)))
+    if args.command == "attempt":
+        return dump(record_attempt(args.ledger, args.id, args.approach, args.result))
+    ledger = load_ledger(args.ledger)
+    if args.command == "next":
+        return dump(next_finding(ledger))
+    if args.command == "status":
+        return dump(status(ledger))
+    return report(ledger)
+
+
+def main(argv: List[str]) -> int:
+    try:
+        args = _build_parser().parse_args(argv)
+    except SystemExit as exc:
+        return 2 if exc.code else 0
+    try:
+        output = _dispatch(args)
+    except LedgerError as exc:
+        print(format_problems(exc.problems))
+        return 1
+    print(output)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
