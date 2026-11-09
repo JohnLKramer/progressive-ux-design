@@ -113,3 +113,29 @@ def test_status_json_has_stop_reason_next(tmp_path):
     result = run("status", ledger)
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout) == {"stop": False, "reason": None, "next": "F1"}
+
+
+def test_ledger_missing_keys_exits_1_with_problem(tmp_path):
+    ledger = tmp_path / "ledger.json"
+    ledger.write_text(json.dumps({"version": 1}))
+    for command in ("status", "next", "report"):
+        result = run(command, ledger)
+        assert result.returncode == 1, command
+        assert "ledger-missing-key" in result.stdout
+        assert "Traceback" not in result.stderr
+
+
+def test_ledger_malformed_finding_exits_1_for_ingest_and_attempt(tmp_path):
+    ledger = tmp_path / "ledger.json"
+    assert run("init", ledger).returncode == 0
+    run("ingest", ledger, write_critique(tmp_path, [finding()]))
+    data = json.loads(ledger.read_text())
+    del data["findings"]["F1"]["status"]
+    ledger.write_text(json.dumps(data))
+    for args in (("ingest", ledger, write_critique(tmp_path, [finding()])),
+                 ("attempt", ledger, "F1", "--approach", "x", "--result", "kept"),
+                 ("report", ledger)):
+        result = run(*args)
+        assert result.returncode == 1, args
+        assert "ledger-finding-missing-field" in result.stdout
+        assert "Traceback" not in result.stderr

@@ -406,4 +406,94 @@ def test_report_lists_unresolved_with_evidence_and_needs_you(path):
 
 def test_report_empty_sections_say_none(path):
     out = report(load_ledger(path))
-    assert out.count("None.") == 4
+    assert out.count("None.") == 5
+
+
+def test_report_lists_below_bar_findings_with_evidence(path):
+    ingest(path, [
+        finding(title="Icon slightly off", severity="P3", layer="STYLE-ONLY", before="icon 2px low"),
+        finding(title="Real problem", severity="P1"),
+    ])
+    out = report(load_ledger(path))
+    assert "## Below bar" in out
+    below = out[out.index("## Below bar"):]
+    assert "Icon slightly off" in below and "P3" in below
+    assert "STYLE-ONLY" in below and "icon 2px low" in below
+    assert "Real problem" not in below
+
+
+def test_report_omits_findings_dropped_only_because_not_reraised(path):
+    ingest(path, [finding(title="Gone quietly", severity="P3"), finding(title="Gone too")])
+    ingest(path, [])
+    out = report(load_ledger(path))
+    assert "Gone quietly" not in out and "Gone too" not in out
+
+
+def test_report_lists_declined_preference_in_needs_you(path):
+    ingest(path, [finding(title="Make it purple", kind="preference", why="taste only")])
+    out = report(load_ledger(path))
+    needs = out[out.index("## Needs you"):out.index("## Below bar")]
+    assert "Make it purple" in needs and "declined" in needs.lower()
+
+
+def write_ledger(path, mutate):
+    data = json.loads(path.read_text())
+    mutate(data)
+    path.write_text(json.dumps(data))
+
+
+@pytest.mark.parametrize("key", ["findings", "bar", "history", "total_attempts", "max_iterations"])
+def test_load_rejects_missing_top_level_key(path, key):
+    write_ledger(path, lambda d: d.pop(key))
+    with pytest.raises(LedgerError) as exc:
+        load_ledger(path)
+    assert [p.code for p in exc.value.problems] == ["ledger-missing-key"]
+
+
+@pytest.mark.parametrize(
+    "mutate, code",
+    [
+        (lambda d: d.update(bar="P9"), "ledger-bad-bar"),
+        (lambda d: d.update(findings=[]), "ledger-bad-findings"),
+        (lambda d: d.update(history="x"), "ledger-bad-history"),
+        (lambda d: d.update(total_attempts="x"), "ledger-bad-total-attempts"),
+        (lambda d: d.update(max_iterations=0), "ledger-bad-max-iterations"),
+    ],
+)
+def test_load_rejects_bad_top_level_values(path, mutate, code):
+    write_ledger(path, mutate)
+    with pytest.raises(LedgerError) as exc:
+        load_ledger(path)
+    assert code in [p.code for p in exc.value.problems]
+
+
+@pytest.mark.parametrize(
+    "mutate, code",
+    [
+        (lambda f: f.pop("title"), "ledger-finding-missing-field"),
+        (lambda f: f.pop("status"), "ledger-finding-missing-field"),
+        (lambda f: f.pop("attempts"), "ledger-finding-missing-field"),
+        (lambda f: f.pop("approaches"), "ledger-finding-missing-field"),
+        (lambda f: f.update(status="weird"), "ledger-finding-bad-status"),
+        (lambda f: f.update(severity="P9"), "ledger-finding-bad-severity"),
+        (lambda f: f.update(layer="NOPE"), "ledger-finding-bad-layer"),
+        (lambda f: f.update(kind="NOPE"), "ledger-finding-bad-kind"),
+        (lambda f: f.update(attempts="x"), "ledger-finding-bad-attempts"),
+        (lambda f: f.update(approaches="x"), "ledger-finding-bad-approaches"),
+        (lambda f: f.update(id="F9"), "ledger-finding-bad-id"),
+    ],
+)
+def test_load_rejects_malformed_finding(path, mutate, code):
+    ingest(path, [finding()])
+    write_ledger(path, lambda d: mutate(d["findings"]["F1"]))
+    with pytest.raises(LedgerError) as exc:
+        load_ledger(path)
+    assert code in [p.code for p in exc.value.problems]
+
+
+def test_load_rejects_non_object_finding(path):
+    ingest(path, [finding()])
+    write_ledger(path, lambda d: d["findings"].update(F1="oops"))
+    with pytest.raises(LedgerError) as exc:
+        load_ledger(path)
+    assert "ledger-finding-not-object" in [p.code for p in exc.value.problems]

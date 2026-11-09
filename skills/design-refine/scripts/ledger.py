@@ -105,7 +105,66 @@ def load_ledger(path: Path) -> dict:
     if not isinstance(ledger, dict) or ledger.get("version") != VERSION:
         got = ledger.get("version") if isinstance(ledger, dict) else ledger
         raise _fail("ledger-version", str(path), "expected version %d, found %r" % (VERSION, got))
+    problems = _validate_ledger(ledger)
+    if problems:
+        raise LedgerError(problems)
     return ledger
+
+
+STATUSES = ACTIVE_STATUSES + ("fixed", "unresolved", "needs_you", "dropped")
+LEDGER_KEYS = ("max_iterations", "bar", "findings", "history", "total_attempts")
+STORED_FIELDS = tuple(k for k in FINDING_FIELDS if k != "same_as")
+
+
+def _is_int(value: object, minimum: int) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value >= minimum
+
+
+def _validate_ledger(ledger: dict) -> List[Problem]:
+    problems: List[Problem] = []
+    for key in LEDGER_KEYS:
+        if key not in ledger:
+            problems.append(Problem("ledger-missing-key", key, "ledger has no %r" % key))
+    if problems:
+        return problems
+    if ledger["bar"] not in SEVERITIES:
+        problems.append(Problem("ledger-bad-bar", "bar", "%r is not one of %s" % (ledger["bar"], ", ".join(SEVERITIES))))
+    if not _is_int(ledger["max_iterations"], 1):
+        problems.append(Problem("ledger-bad-max-iterations", "max_iterations", "%r is not an integer >= 1" % (ledger["max_iterations"],)))
+    if not _is_int(ledger["total_attempts"], 0):
+        problems.append(Problem("ledger-bad-total-attempts", "total_attempts", "%r is not an integer >= 0" % (ledger["total_attempts"],)))
+    history = ledger["history"]
+    if not isinstance(history, list) or not all(_is_int(h, 0) for h in history):
+        problems.append(Problem("ledger-bad-history", "history", "history must be a list of integers >= 0"))
+    findings = ledger["findings"]
+    if not isinstance(findings, dict):
+        problems.append(Problem("ledger-bad-findings", "findings", "findings must be an object keyed by id"))
+        return problems
+    for fid, entry in findings.items():
+        where = "findings.%s" % fid
+        if not isinstance(entry, dict):
+            problems.append(Problem("ledger-finding-not-object", where, "finding must be an object"))
+            continue
+        for key in ("id",) + STORED_FIELDS + ("status", "attempts", "approaches"):
+            if key not in entry:
+                problems.append(Problem("ledger-finding-missing-field", where, "missing field %r" % key))
+        if "id" in entry and (
+            entry["id"] != fid or not isinstance(fid, str) or not fid.startswith("F") or not fid[1:].isdigit()
+        ):
+            problems.append(Problem("ledger-finding-bad-id", where, "id %r does not match key %r or is not F<number>" % (entry["id"], fid)))
+        for key in STORED_FIELDS:
+            if key in entry and (not isinstance(entry[key], str) or not entry[key].strip()):
+                problems.append(Problem("ledger-finding-bad-field", where, "field %r must be a non-empty string" % key))
+        for key, allowed in (("severity", SEVERITIES), ("layer", LAYERS), ("kind", KINDS), ("status", STATUSES)):
+            if key in entry and entry[key] not in allowed:
+                problems.append(Problem("ledger-finding-bad-" + key, where, "%r is not one of %s" % (entry[key], ", ".join(allowed))))
+        if "attempts" in entry and not _is_int(entry["attempts"], 0):
+            problems.append(Problem("ledger-finding-bad-attempts", where, "attempts must be an integer >= 0"))
+        if "approaches" in entry and (
+            not isinstance(entry["approaches"], list) or not all(isinstance(a, str) for a in entry["approaches"])
+        ):
+            problems.append(Problem("ledger-finding-bad-approaches", where, "approaches must be a list of strings"))
+    return problems
 
 
 def at_or_above_bar(severity: str, bar: str) -> bool:
@@ -321,11 +380,22 @@ def report(ledger: dict) -> str:
         for f in findings
         if f["status"] == "needs_you"
     ]
+    needs_you += [
+        "- Declined preference %s (%s): %s - %s" % (f["id"], f["severity"], f["title"], f["why"])
+        for f in findings
+        if f["status"] == "dropped" and f["kind"] == "preference"
+    ]
+    below_bar: List[str] = []
+    for f in findings:
+        if f["status"] in ACTIVE_STATUSES and not at_or_above_bar(f["severity"], ledger["bar"]):
+            below_bar.append("- %s (%s, %s): %s" % (f["id"], f["severity"], f["layer"], f["title"]))
+            below_bar.append("  - Evidence: %s" % f["before"])
     attempts = ["- %s: %d" % (f["id"], f["attempts"]) for f in findings if f["attempts"]]
     lines = ["# Design refine report", ""]
     lines += _section("Fixed", fixed)
     lines += _section("Unresolved", unresolved)
     lines += _section("Needs you", needs_you)
+    lines += _section("Below bar", below_bar)
     lines += _section("Attempts per finding", attempts)
     return "\n".join(lines)
 
