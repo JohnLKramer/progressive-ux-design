@@ -110,16 +110,59 @@ def test_render_page_writes_png(ws, tmp_path):
     assert len(data) > 1000
 
 
+def pixel(png_path, x, y):
+    """RGB of one pixel of an 8-bit RGB/RGBA non-interlaced PNG, using only the stdlib."""
+    import struct
+    import zlib
+
+    data = Path(png_path).read_bytes()
+    assert data.startswith(PNG_SIGNATURE)
+    pos, idat, header = 8, b"", None
+    while pos < len(data):
+        length, kind = struct.unpack(">I4s", data[pos:pos + 8])
+        body = data[pos + 8:pos + 8 + length]
+        if kind == b"IHDR":
+            header = struct.unpack(">IIBBBBB", body)
+        elif kind == b"IDAT":
+            idat += body
+        pos += 12 + length
+    width, height, depth, color_type, _, _, interlace = header
+    assert depth == 8 and color_type in (2, 6) and interlace == 0, header
+    bpp = 3 if color_type == 2 else 4
+    stride = width * bpp
+    raw = zlib.decompress(idat)
+    prev = bytearray(stride)
+    for row in range(y + 1):
+        base = row * (stride + 1)
+        ftype, line = raw[base], bytearray(raw[base + 1:base + 1 + stride])
+        for i in range(stride):
+            a = line[i - bpp] if i >= bpp else 0
+            b = prev[i]
+            c = prev[i - bpp] if i >= bpp else 0
+            if ftype == 1:
+                line[i] = (line[i] + a) & 255
+            elif ftype == 2:
+                line[i] = (line[i] + b) & 255
+            elif ftype == 3:
+                line[i] = (line[i] + (a + b) // 2) & 255
+            elif ftype == 4:
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                pred = a if pa <= pb and pa <= pc else (b if pb <= pc else c)
+                line[i] = (line[i] + pred) & 255
+        prev = line
+    return tuple(prev[x * bpp:x * bpp + 3])
+
+
 @needs_browser
-def test_style_actually_applies_in_untrusted_render(ws, tmp_path):
-    (ws / "styles" / "a" / "style.css").write_text("body{background:#ff0000;font-size:40px}\n")
-    styled = render_page(ws, "demo", "a", tmp_path / "styled.png")
+def test_style_css_actually_applies_in_untrusted_render(ws, tmp_path):
+    (ws / "styles" / "a" / "style.css").write_text("html,body{background:#ff0000}\n")
+    styled = render_page(ws, "demo", "a", tmp_path / "styled.png", layout=False)
     unstyled = tmp_path / "unstyled.png"
     assert screenshot((ws / "pages" / "demo" / "index.html").resolve().as_uri(), unstyled,
                       untrusted=True, full_page=True)
-    assert styled.read_bytes() != unstyled.read_bytes()
-    other = render_page(ws, "demo", "b", tmp_path / "b.png")
-    assert other.read_bytes() != styled.read_bytes()
+    assert pixel(styled, 2, 2) == (255, 0, 0)
+    assert pixel(unstyled, 2, 2) == (255, 255, 255)
 
 
 @needs_browser
