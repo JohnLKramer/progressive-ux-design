@@ -12,6 +12,7 @@ roots do not match what `snapshot` would have recorded.
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -27,7 +28,7 @@ for _p in (_HERE, _HERE.parent.parent / "style-switcher" / "scripts"):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-from problems import Problem  # noqa: E402
+from problems import Problem, format_problems  # noqa: E402
 from validate_page import collect_data_el, validate_page  # noqa: E402
 from validate_style import validate_style  # noqa: E402
 
@@ -394,3 +395,70 @@ def restore(snapshot_dir: Path) -> None:
             shutil.copy2(str(copy), str(tmp))
         _remove(target)
         os.replace(str(tmp), str(target))
+
+
+# --- CLI -----------------------------------------------------------------
+
+
+def _default_cross_style(workspace: Path, style_id: str) -> Optional[str]:
+    """The first style id, in sorted order, other than style_id that has a layout.css."""
+    styles = Path(workspace) / "styles"
+    if not styles.is_dir():
+        return None
+    for entry in sorted(styles.iterdir(), key=lambda p: p.name):
+        if entry.name != style_id and entry.is_dir() and (entry / "layout.css").is_file():
+            return entry.name
+    return None
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="gates.py")
+    sub = parser.add_subparsers(dest="command", required=True)
+    p = sub.add_parser("snapshot")
+    p.add_argument("--workspace", type=Path, required=True)
+    p.add_argument("--slug", required=True)
+    p.add_argument("--style", required=True)
+    p.add_argument("--cross-style")
+    p.add_argument("--doc", type=Path)
+    p.add_argument("--dest", type=Path, required=True)
+    p = sub.add_parser("check")
+    p.add_argument("--snapshot", type=Path, required=True)
+    p.add_argument("--kind", choices=_KINDS, required=True)
+    p = sub.add_parser("restore")
+    p.add_argument("--snapshot", type=Path, required=True)
+    return parser
+
+
+def _dispatch(args: argparse.Namespace) -> Tuple[int, str]:
+    """Returns (exit code, stdout text). Expected failures raise OSError or ValueError."""
+    if args.command == "snapshot":
+        cross = args.cross_style
+        if cross is None:
+            cross = _default_cross_style(args.workspace, args.style)
+        data = snapshot(args.workspace, args.slug, args.style, args.dest, cross_style=cross, doc=args.doc)
+        return 0, json.dumps(data, indent=2)
+    if args.command == "check":
+        problems = check(args.snapshot, args.kind)
+        return (1, format_problems(problems)) if problems else (0, "")
+    restore(args.snapshot)
+    return 0, ""
+
+
+def main(argv: List[str]) -> int:
+    try:
+        args = _build_parser().parse_args(argv)
+    except SystemExit as exc:
+        return 2 if exc.code else 0
+    try:
+        code, output = _dispatch(args)
+    except (OSError, ValueError) as exc:
+        # Missing page or style, bad names, a malformed snapshot: expected, reported as a Problem.
+        print(format_problems([Problem("gate-error", args.command, "%s: %s" % (type(exc).__name__, exc))]))
+        return 1
+    if output:
+        print(output)
+    return code
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
