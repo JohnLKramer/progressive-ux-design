@@ -49,3 +49,53 @@ def test_critic_example_compare_json_has_a_valid_verdict():
     assert set(compares[0]) == {"verdict", "reason"}
     assert compares[0]["verdict"] in VERDICTS
     assert isinstance(compares[0]["reason"], str) and compares[0]["reason"].strip()
+
+
+REPO_ROOT = SKILL_DIR.parents[1]
+FIXERS = ("fix-structural.md", "fix-style.md")
+MARKER_ATTRS = ("data-el", "data-action", "data-exit", "data-variant")
+
+
+def _repo_paths(text):
+    return sorted(set(re.findall(r"`(skills/[^`\s]+\.(?:md|py|css|json|html))`", text)))
+
+
+def test_fixer_briefs_state_allowed_paths_and_needs_you_escape():
+    structural = (SKILL_DIR / "fix-structural.md").read_text()
+    style = (SKILL_DIR / "fix-style.md").read_text()
+    for text in (structural, style):
+        for field in FINDING_FIELDS:
+            assert "`%s`" % field in text, field
+        assert "NEEDS-YOU: " in text
+        assert "different approach" in text
+        assert "untrusted" in text
+    assert "pages/<slug>/" in structural
+    assert "screen doc" in structural
+    assert "NEEDS-YOU: <why>" in structural
+    assert "new `data-el`" in structural
+    for name in ("style.css", "layout.css", "tokens.json"):
+        assert "styles/<style_id>/%s" % name in style, name
+    assert "@import" in style
+    assert "validate.py style" in style
+
+
+def test_structural_brief_names_marker_attrs_and_build_html_path():
+    text = (SKILL_DIR / "fix-structural.md").read_text()
+    for attr in MARKER_ATTRS:
+        assert "`%s`" % attr in text, attr
+    for rel in (
+        "skills/progressive-ux-design/build-html.md",
+        "skills/style-switcher/make-stylable.md",
+        "skills/style-switcher/role-vocabulary.md",
+    ):
+        assert "`%s`" % rel in text, rel
+        assert (REPO_ROOT / rel).is_file(), rel
+    assert "validate.py page" in text
+
+
+def test_every_repo_path_in_fixer_briefs_exists():
+    for name in FIXERS:
+        paths = _repo_paths((SKILL_DIR / name).read_text())
+        assert paths, name
+        for rel in paths:
+            assert (REPO_ROOT / rel).is_file(), "%s references missing %s" % (name, rel)
