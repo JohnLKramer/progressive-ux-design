@@ -26,3 +26,16 @@ Run `/style-switcher` and pick one of three modes: `make-stylable` turns a saved
 The scripts need Python 3.9 or newer. Playwright is optional: it is only needed for screenshots (`screenshot.py`) and for the acceptance run (`python3 skills/style-switcher/scripts/acceptance.py <workspace> <out-dir>`), which visits every page in every style in both display modes and writes a contact sheet.
 
 Saved pages and zips are untrusted input: scripts never run from them, and screenshots of source pages load them with scripts off and the network blocked.
+
+
+# design-refine
+
+The `design-refine` skill improves one page of a style-switcher workspace by critique and fix. For each style it runs a bounded loop: render the styled page, have a fresh critic review it against the page's one-sentence intent, fix the most important finding, check the fix, and keep it only if a before/after comparison says it is not worse.
+
+Run `/design-refine <workspace> <slug> <style...>`, optionally with `--doc` (the screen doc the page came from), `--max-iterations` (default 5) and `--bar` (default `P2`; findings below it are reported, not fixed). With more than one style the loop runs once per style.
+
+Style-only findings are fixed in that style's CSS. Structural findings (hierarchy, grouping, markup) are fixed in the screen doc or the page's own HTML, so every style inherits them. Structural fixes are applied automatically behind gates: the page's markers, the page and style validators, a check that only allowed files changed, and a render in a second style. A fix that fails a gate or makes the page worse is reverted. A finding is retried once with a different approach, then given up on. Findings that need a product decision go to a needs-you list instead.
+
+Each run writes a log folder, `<workspace>/.design-refine/<slug>--<style>/`, with the ledger, before and after screenshots per iteration and a `report.md`. A rerun needs a fresh folder: remove or rename the old one.
+
+It needs Python 3.9 or newer and Playwright for Python with its Chromium browser, which renders the screenshots the critic reviews.
