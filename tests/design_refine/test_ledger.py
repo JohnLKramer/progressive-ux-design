@@ -3,7 +3,7 @@ import json
 import pytest
 
 import ledger
-from ledger import LedgerError, ingest, init_ledger, load_ledger
+from ledger import LedgerError, ingest, init_ledger, load_ledger, next_finding, record_attempt, report, status
 
 
 def finding(**over):
@@ -270,3 +270,140 @@ def test_constants():
     assert ledger.SEVERITIES == ("P0", "P1", "P2", "P3")
     assert ledger.LAYERS == ("STRUCTURAL", "STYLE-ONLY", "AMBIGUOUS")
     assert ledger.FINDING_FIELDS[0] == "same_as"
+
+
+def test_next_prefers_severity_then_structural_then_id(path):
+    ingest(path, [
+        finding(title="a", severity="P1", layer="STYLE-ONLY"),
+        finding(title="b", severity="P1", layer="STRUCTURAL"),
+        finding(title="c", severity="P0", layer="STYLE-ONLY"),
+        finding(title="d", severity="P1", layer="STRUCTURAL"),
+    ])
+    data = load_ledger(path)
+    assert next_finding(data)["id"] == "F3"
+    data["findings"]["F3"]["status"] = "fixed"
+    assert next_finding(data)["id"] == "F2"
+    data["findings"]["F2"]["status"] = "fixed"
+    assert next_finding(data)["id"] == "F4"
+    data["findings"]["F4"]["status"] = "fixed"
+    assert next_finding(data)["id"] == "F1"
+
+
+def test_next_orders_ids_numerically(path):
+    ingest(path, [finding(title="t%d" % i) for i in range(8)])
+    ingest(path, [finding(same_as="F%d" % i, title="t") for i in range(1, 9)] + [])
+    data = load_ledger(path)
+    for fid in ("F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"):
+        data["findings"][fid]["status"] = "fixed"
+    data["findings"]["F10"] = dict(data["findings"]["F2"], id="F10", status="open")
+    data["findings"]["F9"] = dict(data["findings"]["F2"], id="F9", status="open")
+    assert next_finding(data)["id"] == "F9"
+
+
+def test_next_skips_below_bar_and_non_open(path):
+    ingest(path, [
+        finding(title="low", severity="P3"),
+        finding(title="done"),
+        finding(title="waiting"),
+    ])
+    set_status(path, "F2", "attempted", 1)
+    set_status(path, "F3", "unresolved", 2)
+    assert next_finding(load_ledger(path)) is None
+    set_status(path, "F3", "retry", 1)
+    assert next_finding(load_ledger(path))["id"] == "F3"
+
+
+def test_first_failed_attempt_sets_retry_second_sets_unresolved(path):
+    ingest(path, [finding()])
+    entry = record_attempt(path, "F1", "made cancel quiet", "gate-failed")
+    assert entry["status"] == "retry" and entry["attempts"] == 1
+    entry = record_attempt(path, "F1", "removed cancel", "worse")
+    assert entry["status"] == "unresolved" and entry["attempts"] == 2
+    data = load_ledger(path)
+    assert data["findings"]["F1"]["approaches"] == ["made cancel quiet", "removed cancel"]
+    assert data["total_attempts"] == 2
+
+
+def test_kept_attempt_sets_attempted(path):
+    ingest(path, [finding()])
+    entry = record_attempt(path, "F1", "made cancel quiet", "kept")
+    assert entry["status"] == "attempted" and entry["attempts"] == 1
+    assert load_ledger(path)["total_attempts"] == 1
+
+
+def test_record_attempt_rejects_bad_input_and_leaves_file_unchanged(path):
+    ingest(path, [finding(), finding(title="b")])
+    set_status(path, "F2", "fixed", 1)
+    before = raw(path)
+    with pytest.raises(LedgerError):
+        record_attempt(path, "F9", "x", "kept")
+    with pytest.raises(LedgerError):
+        record_attempt(path, "F2", "x", "kept")
+    with pytest.raises(LedgerError):
+        record_attempt(path, "F1", "x", "great")
+    with pytest.raises(LedgerError):
+        record_attempt(path, "F1", "  ", "kept")
+    assert raw(path) == before
+
+
+def seed_history(path, history, total_attempts=0):
+    data = json.loads(path.read_text())
+    data["history"] = history
+    data["total_attempts"] = total_attempts
+    path.write_text(json.dumps(data))
+
+
+def test_status_stops_at_cap(path):
+    ingest(path, [finding()])
+    seed_history(path, [1], total_attempts=5)
+    assert status(load_ledger(path)) == {"stop": True, "reason": "cap", "next": "F1"}
+
+
+def test_status_stops_bar_clear(path):
+    ingest(path, [finding(severity="P3")])
+    assert status(load_ledger(path)) == {"stop": True, "reason": "bar-clear", "next": None}
+
+
+def test_status_stops_no_progress_after_two_flat_iterations(path):
+    ingest(path, [finding()])
+    seed_history(path, [3, 3, 3])
+    assert status(load_ledger(path))["reason"] == "no-progress"
+    seed_history(path, [2, 3, 4])
+    assert status(load_ledger(path))["reason"] == "no-progress"
+
+
+def test_status_needs_three_history_entries_for_no_progress(path):
+    ingest(path, [finding()])
+    seed_history(path, [3, 3])
+    assert status(load_ledger(path)) == {"stop": False, "reason": None, "next": "F1"}
+
+
+def test_status_continues_when_count_drops(path):
+    ingest(path, [finding()])
+    seed_history(path, [4, 4, 3])
+    assert status(load_ledger(path)) == {"stop": False, "reason": None, "next": "F1"}
+
+
+def test_report_lists_unresolved_with_evidence_and_needs_you(path):
+    ingest(path, [
+        finding(title="Cancel too loud", before="Cancel filled"),
+        finding(title="Footer crushed", severity="P2"),
+        finding(title="Pick a goal", kind="intent"),
+        finding(title="Spacing", severity="P2"),
+    ])
+    record_attempt(path, "F1", "quiet cancel", "gate-failed")
+    record_attempt(path, "F1", "remove cancel", "worse")
+    record_attempt(path, "F2", "pad footer", "kept")
+    set_status(path, "F2", "fixed", 1)
+    out = report(load_ledger(path))
+    assert "Cancel too loud" in out and "Cancel filled" in out
+    assert "not a real issue or needs a different kind of fix" in out
+    assert "quiet cancel" in out and "remove cancel" in out
+    assert "Footer crushed" in out and "Pick a goal" in out
+    assert "F1: 2" in out
+    assert out.index("Fixed") < out.index("Unresolved") < out.index("Needs you")
+
+
+def test_report_empty_sections_say_none(path):
+    out = report(load_ledger(path))
+    assert out.count("None.") == 4

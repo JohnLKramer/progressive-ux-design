@@ -226,3 +226,104 @@ def ingest(path: Path, critique: List[dict]) -> dict:
     ledger["history"].append(open_count(ledger))
     _write(path, ledger)
     return result
+
+
+ATTEMPT_RESULTS = ("kept", "gate-failed", "worse")
+SELECTABLE_STATUSES = ("open", "retry")
+MAX_ATTEMPTS = 2
+NO_PROGRESS_WINDOW = 3
+
+
+def _id_number(fid: str) -> int:
+    return int(fid[1:])
+
+
+def next_finding(ledger: dict) -> Optional[dict]:
+    candidates = [
+        f
+        for f in ledger["findings"].values()
+        if f["status"] in SELECTABLE_STATUSES and at_or_above_bar(f["severity"], ledger["bar"])
+    ]
+    if not candidates:
+        return None
+    return min(
+        candidates,
+        key=lambda f: (SEVERITIES.index(f["severity"]), f["layer"] != "STRUCTURAL", _id_number(f["id"])),
+    )
+
+
+def record_attempt(path: Path, finding_id: str, approach: str, result: str) -> dict:
+    path = Path(path)
+    ledger = load_ledger(path)
+    problems: List[Problem] = []
+    entry = ledger["findings"].get(finding_id)
+    if entry is None:
+        problems.append(Problem("unknown-finding", "finding_id", "%r is not a ledger id" % (finding_id,)))
+    elif entry["status"] not in SELECTABLE_STATUSES:
+        problems.append(
+            Problem("not-attemptable", finding_id, "status is %r, expected one of %s" % (entry["status"], ", ".join(SELECTABLE_STATUSES)))
+        )
+    if result not in ATTEMPT_RESULTS:
+        problems.append(Problem("bad-result", "result", "%r is not one of %s" % (result, ", ".join(ATTEMPT_RESULTS))))
+    if not isinstance(approach, str) or not approach.strip():
+        problems.append(Problem("bad-approach", "approach", "approach must be a non-empty string"))
+    if problems:
+        raise LedgerError(problems)
+
+    entry["attempts"] += 1
+    entry["approaches"].append(approach)
+    ledger["total_attempts"] += 1
+    if result == "kept":
+        entry["status"] = "attempted"
+    elif entry["attempts"] >= MAX_ATTEMPTS:
+        entry["status"] = "unresolved"
+    else:
+        entry["status"] = "retry"
+    _write(path, ledger)
+    return entry
+
+
+def status(ledger: dict) -> dict:
+    upcoming = next_finding(ledger)
+    next_id = upcoming["id"] if upcoming else None
+    history = ledger["history"]
+    recent = history[-NO_PROGRESS_WINDOW:]
+    if ledger["total_attempts"] >= ledger["max_iterations"]:
+        reason: Optional[str] = "cap"
+    elif upcoming is None:
+        reason = "bar-clear"
+    elif len(recent) == NO_PROGRESS_WINDOW and all(a <= b for a, b in zip(recent, recent[1:])):
+        reason = "no-progress"
+    else:
+        reason = None
+    return {"stop": reason is not None, "reason": reason, "next": next_id}
+
+
+def _section(title: str, lines: List[str]) -> List[str]:
+    return ["## " + title, ""] + (lines if lines else ["None."]) + [""]
+
+
+def report(ledger: dict) -> str:
+    findings = sorted(ledger["findings"].values(), key=lambda f: _id_number(f["id"]))
+    fixed = [
+        "- %s (%s): %s" % (f["id"], f["severity"], f["title"]) for f in findings if f["status"] == "fixed"
+    ]
+    unresolved: List[str] = []
+    for f in (f for f in findings if f["status"] == "unresolved"):
+        unresolved.append("- %s (%s): %s" % (f["id"], f["severity"], f["title"]))
+        unresolved.append("  - Evidence: %s" % f["before"])
+        for number, approach in enumerate(f["approaches"], 1):
+            unresolved.append("  - Attempt %d: %s" % (number, approach))
+        unresolved.append("  - This may be not a real issue or needs a different kind of fix.")
+    needs_you = [
+        "- %s (%s): %s - %s" % (f["id"], f["severity"], f["title"], f["why"])
+        for f in findings
+        if f["status"] == "needs_you"
+    ]
+    attempts = ["- %s: %d" % (f["id"], f["attempts"]) for f in findings if f["attempts"]]
+    lines = ["# Design refine report", ""]
+    lines += _section("Fixed", fixed)
+    lines += _section("Unresolved", unresolved)
+    lines += _section("Needs you", needs_you)
+    lines += _section("Attempts per finding", attempts)
+    return "\n".join(lines)
