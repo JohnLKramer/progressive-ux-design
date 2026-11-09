@@ -490,3 +490,45 @@ def test_restore_with_missing_copy_raises_before_touching_anything(ws):
     with pytest.raises(FileNotFoundError):
         gates.restore(dest)
     assert "Popular now" in (ws / PAGE).read_text(encoding="utf-8")
+
+
+# --- snapshot root containment -------------------------------------------
+
+
+def _symlink_root_outside(ws, tmp_path, rel):
+    """Move the root at rel outside the workspace and leave a symlink to it in its place."""
+    import shutil
+
+    outside = tmp_path / "outside" / rel.replace("/", "_")
+    outside.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(ws / rel), str(outside))
+    (ws / rel).symlink_to(outside, target_is_directory=True)
+    return outside
+
+
+@pytest.mark.parametrize("rel", ["pages/demo", "styles/a", "styles/b"])
+def test_snapshot_refuses_root_symlinked_outside_workspace(ws, tmp_path, rel):
+    _symlink_root_outside(ws, tmp_path, rel)
+    dest = ws / ".design-refine" / "s"
+    with pytest.raises(gates.SnapshotError, match="outside the workspace"):
+        gates.snapshot(ws, "demo", "a", dest, cross_style="b")
+    assert not dest.exists()
+
+
+def test_failed_containment_snapshot_leaves_empty_dest_empty(ws, tmp_path):
+    _symlink_root_outside(ws, tmp_path, "pages/demo")
+    dest = ws / ".design-refine" / "s"
+    dest.mkdir(parents=True)
+    with pytest.raises(gates.SnapshotError):
+        gates.snapshot(ws, "demo", "a", dest)
+    assert list(dest.iterdir()) == []
+
+
+def test_snapshot_allows_root_symlinked_inside_workspace(ws):
+    import shutil
+
+    shutil.move(str(ws / "styles" / "a"), str(ws / "styles" / "a-real"))
+    (ws / "styles" / "a").symlink_to(ws / "styles" / "a-real", target_is_directory=True)
+    dest = ws / ".design-refine" / "s"
+    gates.snapshot(ws, "demo", "a", dest)
+    assert (dest / "snapshot.json").is_file()

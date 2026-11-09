@@ -105,3 +105,14 @@ def test_malformed_snapshot_exits_1_without_traceback(tmp_path):
 def test_usage_errors_exit_2(ws):
     assert run().returncode == 2
     assert run("check", "--snapshot", ws, "--kind", "bogus").returncode == 2
+
+
+def test_cli_snapshot_with_root_symlinked_outside_is_gate_error(ws, tmp_path):
+    outside = tmp_path / "outside-page"
+    shutil.move(str(ws / "pages" / "demo"), str(outside))
+    (ws / "pages" / "demo").symlink_to(outside, target_is_directory=True)
+    result = run(*snap_args(ws))
+    assert result.returncode == 1
+    assert result.stdout.startswith("gate-error: snapshot: SnapshotError:")
+    assert "outside the workspace" in result.stdout
+    assert not (ws / ".design-refine" / "s1").exists()

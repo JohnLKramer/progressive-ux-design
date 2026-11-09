@@ -146,6 +146,25 @@ def _expected_roots(workspace: Path, slug: str, style_id: str, cross_style: Opti
     return out
 
 
+class SnapshotError(ValueError):
+    """A snapshot is malformed, or its roots do not lie where this module requires."""
+
+
+def _check_roots_contained(workspace: Path, roots: List[dict], doc: Optional[str], context: str) -> None:
+    """Every root must resolve (symlinks followed) strictly inside the workspace and outside
+    WORK_DIR. The one exception is the recorded doc file, which may live anywhere."""
+    real_ws = workspace.resolve()
+    work_dir = real_ws / WORK_DIR
+    for root in roots:
+        resolved = Path(root["path"]).resolve()
+        if root["kind"] == "file" and root["path"] == doc and resolved == Path(doc):
+            continue
+        if resolved == real_ws or not _is_within(resolved, real_ws) or _is_within(resolved, work_dir):
+            raise SnapshotError(
+                "%s: root %s resolves to %s, outside the workspace" % (context, root["path"], resolved)
+            )
+
+
 def snapshot(
     workspace: Path,
     slug: str,
@@ -182,6 +201,9 @@ def snapshot(
         doc_str = str(doc_path)
 
     roots = _expected_roots(workspace, slug, style_id, cross_style, doc_str)
+    # Checked before dest is touched: a root symlinked out of the workspace would make every
+    # later check and restore refuse, so the iteration could not be reverted.
+    _check_roots_contained(workspace, roots, doc_str, "snapshot of %s" % workspace)
 
     dest = Path(dest).resolve()
     if _is_within(dest, workspace) and not _is_within(dest, workspace / WORK_DIR):
@@ -218,10 +240,6 @@ def snapshot(
     }
     (dest / SNAPSHOT_FILE).write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return data
-
-
-class SnapshotError(ValueError):
-    """snapshot.json is malformed or does not describe a snapshot this module would write."""
 
 
 _KINDS = ("structural", "style")
@@ -270,19 +288,8 @@ def _load_snapshot(snapshot_dir: Path) -> dict:
     expected = _expected_roots(workspace, slug, style_id, cross_style, doc)
     if roots != expected:
         raise SnapshotError("%s: roots %r do not match the expected roots %r" % (path, roots, expected))
-    # Symlinks could point a root elsewhere: every root must really resolve inside the
-    # workspace (outside .design-refine), except the recorded doc file.
-    work_dir = workspace.resolve() / WORK_DIR
-    for root in roots:
-        resolved = Path(root["path"]).resolve()
-        if root["kind"] == "file" and root["path"] == doc and resolved == Path(doc):
-            continue
-        if (
-            resolved == workspace.resolve()
-            or not _is_within(resolved, workspace.resolve())
-            or _is_within(resolved, work_dir)
-        ):
-            raise SnapshotError("%s: root %s resolves to %s, outside the workspace" % (path, root["path"], resolved))
+    # Symlinks could point a root elsewhere since the snapshot was taken.
+    _check_roots_contained(workspace, roots, doc, str(path))
     return data
 
 
