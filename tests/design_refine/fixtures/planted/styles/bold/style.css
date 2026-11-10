@@ -1,0 +1,12 @@
+body { margin: 0; font-family: "Helvetica Neue", Arial, sans-serif; font-size: 16px; line-height: 1.5; color: #1b1b2f; background: #f6f4ff; }
+[data-sp="header"] { padding: 18px 24px; background: #3b2a8c; color: #ffffff; }
+[data-sp="header"] [data-sp="heading"] { font-size: 26px; font-weight: 800; margin: 0; }
+[data-sp="link"] { color: #ffffff; font-weight: 600; text-decoration: none; }
+[data-sp="heading"] { margin: 0 0 8px; font-weight: 700; }
+[data-sp="section"] { padding: 16px 24px; }
+[data-sp="card"] { background: #ffffff; border-radius: 12px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(59, 42, 140, 0.15); }
+[data-sp="text"] { margin: 0 0 8px; }
+[data-sp="button"] { font: inherit; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; }
+[data-action="bring-a-friend"] { background: #3b2a8c; color: #ffffff; border: 2px solid #3b2a8c; }
+[data-action="add-to-calendar"] { background: #ffffff; color: #3b2a8c; border: 2px solid #3b2a8c; }
+[data-action="cancel-reservation"] { background: transparent; color: #9c1c1c; border: 2px solid transparent; font-weight: 500; text-decoration: underline; }

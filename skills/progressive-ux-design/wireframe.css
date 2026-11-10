@@ -1,0 +1,41 @@
+/* Wireframe look: greyscale, system font, structural layout only.
+   One desktop layout; no breakpoints. Hooks are the wf-* classes listed in build-html.md. */
+
+body { font: 16px/1.4 system-ui, sans-serif; color: #222; background: #fff; margin: 0; padding: 16px; }
+main, section { display: flex; flex-direction: column; gap: 24px; }
+p, h1, h2, h3 { margin: 0; }
+button { font: inherit; color: #222; background: #eee; border: 1px solid #888; padding: 4px 10px; }
+img { display: none; }
+nav { display: flex; gap: 16px; }
+a { color: inherit; }
+nav a { text-decoration: underline; }
+
+/* Arrangement */
+.wf-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 8px 0; border-bottom: 1px solid #888; }
+.wf-row { display: flex; align-items: center; gap: 8px; }
+.wf-row-center { justify-content: center; }
+.wf-row-end { justify-content: flex-end; }
+.wf-chip-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.wf-col { display: flex; flex-direction: column; gap: 8px; }
+.wf-grid-2, .wf-grid-3, .wf-grid-4 { display: grid; gap: 16px; grid-auto-rows: 1fr; }
+.wf-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.wf-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.wf-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Bordered nodes */
+.wf-card, .wf-tile { position: relative; box-sizing: border-box; border: 1px solid #888; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.wf-tile { background: #f4f4f4; justify-content: center; }
+.wf-box { border: 1px solid #888; padding: 8px; }
+.wf-card:has(> .wf-corner-tl, > .wf-corner-tr), .wf-tile:has(> .wf-corner-tl, > .wf-corner-tr) { padding-top: 40px; }
+.wf-card:has(> .wf-corner-bl, > .wf-corner-br), .wf-tile:has(> .wf-corner-bl, > .wf-corner-br) { padding-bottom: 40px; }
+
+/* Corner slots: a direct child of a card, tile or box */
+.wf-box { position: relative; }
+.wf-corner-tl, .wf-corner-tr, .wf-corner-bl, .wf-corner-br { position: absolute; }
+.wf-corner-tl { top: 8px; left: 8px; }
+.wf-corner-tr { top: 8px; right: 8px; }
+.wf-corner-bl { bottom: 8px; left: 8px; }
+.wf-corner-br { bottom: 8px; right: 8px; }
+
+/* Block links inside a card or tile read as text, not as a wall of blue links */
+.wf-card a, .wf-tile a, .wf-box a { color: inherit; text-decoration: none; display: block; }
