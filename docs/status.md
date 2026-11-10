@@ -189,3 +189,29 @@ Screens and components can link an HTML mockup, bound to the doc by `data-el`. A
 - Seen in GREEN, unsettled: which node holds `data-el` for a group (run3 put it on `nav`); `source:` path rewrite; whether a pointer sentence under `## Wireframe` is allowed (run2 added one); heading levels and whether chips are buttons.
 - Second GREEN (2 runs, after adding four rules to `build-html.md`: `data-el` on the wrapping node for a multi-part element, tags follow role, doc edits limited to `wireframe:` plus Open questions, `source:` untouched): both runs had 16 of 16 `data-el`, no `id="El#"`, no style or script, chips as text, `data-el` on `nav`, and a doc diff of exactly one line. Still unsettled: placeholder label format for avatars, doctype/`lang`/`title` boilerplate, element order inside a card, and the doc naming no element locations (the `El#` ids are the only reference).
 - Component and evaluate runs (1 each): the component build followed `build-html.md` (root `data-component`, no `data-state`, 2 of 2 `data-el`, action and exit on the same node, doc diff one line). Evaluate on a screen with 4 seeded HTML defects (an `id="El3"`, a missing `data-el`, an extra `data-el`, an action not in the table) and a flow citing a missing element: all found, with the right counts. It also corrected the flow's dangling `game-picks.El99` to `El9`, which was a guess. Rule added to `evaluate-flows.md` (dangling element or action citation is a question, never a correction); that rule was not re-run. Not tested: a flow citation that resolves, a component slot in a screen's HTML, a non-default state file.
+
+## Session: design-refine (2026-11-09)
+
+Added the `design-refine` skill (`skills/design-refine/`): an orchestrator `SKILL.md`, a critic brief, two fixer briefs, and three scripts (`ledger.py`, `gates.py`, `render.py`). Spec: `docs/superpowers/specs/2026-11-09-design-refine-design.md`. Plan: `docs/superpowers/plans/2026-11-09-design-refine.md`. `python3 -m pytest tests/design_refine` passes; the full suite (`python3 -m pytest tests`) was not run.
+
+### Bake-off that chose the critic
+
+Four critique skills (humbleteam, Prasad, grapeot, design-loop's critic) were each run twice, in fresh subagents, on `classpass-profile` in `big-box-gym`. All agreed on the real problems; they differed in output shape, layer-tag cleanliness and actionability. The critic brief is a rewrite built on humbleteam's structure (MIT) with Prasad's vocabulary (MIT); no grapeot text is included (no licence). One page and one style only.
+
+### Live runs on the planted workspace
+
+Workspace: `tests/design_refine/fixtures/planted/`, style `plain`, cross style `bold`, `--max-iterations 4`, critic and fixers on `sonnet`.
+
+- **Baseline (no skill), 2 agents.** Both edited CSS freely (one also edited the page HTML and moved elements), used no ledger or gates, and did not render. Both runs were contaminated: one read the fixture's answer-key file in the workspace root, the other a comment in the CSS. Both have since been removed from the fixture, so the baseline needs re-running to count as evidence.
+- **GREEN, happy path, 1 run.** Four iterations, four fixes kept (F1 contrast, F2 loudest Cancel, F3 faint Add to calendar, F6 identical button names), loop stopped on `cap`. The critic accounted for every open id each review, did not re-raise fixed findings (the ledger marked them fixed), and the ambiguous finding (credit balance) went to needs-you and stayed there. The one structural fix (F6) passed the marker gate and the cross-style compare. The ledger view kept fixers' approaches away from the critic.
+- **Defects found by the live run, fixed:** the report omitted findings still open at the cap (F4 was open and unmentioned); the fixture leaked its own answer key.
+- **Findings not fixed:** a screenshot-only compare returns `same` for a markup- or accessibility-only fix (aria-labels), so for those the only checks are the marker diff and validators. During the run the critic was told to write `critique.json` itself to save controller context; `SKILL.md` says the orchestrator saves the reply.
+
+### Not run live (covered only by scripted tests or not at all)
+
+- A fix that fails the gate and is restored, with a real fixer.
+- A finding ending `unresolved` after two attempts.
+- The doc-backed structural path (edit the doc, `build-html`, `make-stylable`).
+- The run on the bake-off page (plan Task 12 step 4).
+- Several styles in one run; `--bar` other than P2.
+- Cost: about 25 subagent dispatches for 4 kept fixes.
