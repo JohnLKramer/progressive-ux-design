@@ -252,7 +252,7 @@ For each style whose loop ended at step 4:
 2. Append to `<log>/report.md` a `## Notes` section with: the stop reason from step 4; one line per iteration whose structural fix was not cross-checked (no cross style); and, when there is no screen doc, that no doc exists and structural fixes went to the page's own HTML. Then append a `## Iteration log` section with this style's iteration log lines, in order (or `None.` when there were no iterations with an attempt).
 3. Copy the screenshots: `<log>/iter-1/before.png` to `<log>/final-before.png`, and the `after.png` of the last iteration recorded `kept` to `<log>/final-after.png`. If no iteration was kept, there is no `final-after.png`: say so in the notes.
 
-Then reply to the user, per style: the log folder path; fixed findings; unresolved findings, each with the reason (its evidence and the approaches tried, from the report); the needs-you list; the below-bar findings; the stop reason; and any "not cross-checked" note.
+Then reply to the user, per style: the log folder path; fixed findings; unresolved findings, each with the reason (its evidence and the approaches tried, from the report); still open findings (at or above the bar when the loop stopped); the needs-you list; the below-bar findings; the stop reason; and any "not cross-checked" note.
 
 ## Failures
 

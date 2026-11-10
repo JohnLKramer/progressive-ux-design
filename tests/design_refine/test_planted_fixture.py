@@ -134,3 +134,11 @@ def test_bold_style_has_no_planted_contrast_defect():
     css = (BOLD / "style.css").read_text(encoding="utf-8")
     body = rule_body(css, "body")
     assert contrast(decl(body, "color"), decl(body, "background")) >= 4.5
+
+
+def test_workspace_does_not_leak_its_answer_key():
+    assert not (PLANTED / "PLANTED.md").exists()
+    assert (PLANTED.parent / "planted_notes.md").is_file()
+    for path in PLANTED.rglob("*"):
+        if path.is_file():
+            assert "PLANTED" not in path.read_text(encoding="utf-8"), path

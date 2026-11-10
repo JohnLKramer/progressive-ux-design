@@ -384,6 +384,12 @@ def report(ledger: dict) -> str:
         for number, approach in enumerate(f["approaches"], 1):
             unresolved.append("  - Attempt %d: %s" % (number, approach))
         unresolved.append("  - This may be not a real issue or needs a different kind of fix.")
+    still_open: List[str] = []
+    for f in findings:
+        if f["status"] in ACTIVE_STATUSES and at_or_above_bar(f["severity"], ledger["bar"]):
+            still_open.append("- %s (%s, %s): %s" % (f["id"], f["severity"], f["layer"], f["title"]))
+            still_open.append("  - Evidence: %s" % f["before"])
+            still_open.append("  - Attempts: %d" % f["attempts"])
     needs_you = [
         "- %s (%s): %s - %s" % (f["id"], f["severity"], f["title"], f["why"])
         for f in findings
@@ -403,6 +409,7 @@ def report(ledger: dict) -> str:
     lines = ["# Design refine report", ""]
     lines += _section("Fixed", fixed)
     lines += _section("Unresolved", unresolved)
+    lines += _section("Still open", still_open)
     lines += _section("Needs you", needs_you)
     lines += _section("Below bar", below_bar)
     lines += _section("Attempts per finding", attempts)

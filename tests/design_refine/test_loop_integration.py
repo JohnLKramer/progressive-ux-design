@@ -208,3 +208,7 @@ def test_cap_stops_before_a_further_attempt(tmp_path):
     assert attempts == cap
     assert status["next"] is not None  # work remained: the cap, not an empty bar, stopped it
     assert json.loads(loop.ledger.read_text(encoding="utf-8"))["total_attempts"] == cap
+    report = loop.report()
+    still_open = report[report.index("## Still open"):report.index("## Needs you")]
+    assert "%s (" % status["next"] in still_open
+    assert "Finding %d" % (cap + 1) in still_open

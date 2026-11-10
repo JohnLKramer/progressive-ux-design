@@ -406,7 +406,47 @@ def test_report_lists_unresolved_with_evidence_and_needs_you(path):
 
 def test_report_empty_sections_say_none(path):
     out = report(load_ledger(path))
-    assert out.count("None.") == 5
+    assert out.count("None.") == 6
+
+
+def test_report_still_open_lists_open_finding_with_evidence_and_attempts(path):
+    ingest(path, [
+        finding(title="Weak contrast", severity="P2", layer="STYLE-ONLY", before="text 2.1:1"),
+        finding(title="Retried", severity="P1", before="too loud"),
+    ])
+    record_attempt(path, "F2", "quiet it", "worse")
+    out = report(load_ledger(path))
+    section = out[out.index("## Still open"):out.index("## Needs you")]
+    assert out.index("## Unresolved") < out.index("## Still open")
+    assert "F1 (P2, STYLE-ONLY): Weak contrast" in section
+    assert "Evidence: text 2.1:1" in section
+    assert "Attempts: 0" in section
+    assert "F2 (P1, " in section and "Attempts: 1" in section
+
+
+def test_report_still_open_includes_attempted_findings(path):
+    ingest(path, [finding(title="Kept but unconfirmed")])
+    record_attempt(path, "F1", "fix", "kept")
+    out = report(load_ledger(path))
+    assert "Kept but unconfirmed" in out[out.index("## Still open"):out.index("## Needs you")]
+
+
+def test_report_still_open_excludes_other_statuses_and_below_bar(path):
+    ingest(path, [
+        finding(title="Below the bar", severity="P3"),
+        finding(title="Is fixed"),
+        finding(title="Is unresolved"),
+        finding(title="Is needs you", kind="intent"),
+        finding(title="Is dropped", kind="preference"),
+    ])
+    set_status(path, "F2", "fixed", 1)
+    set_status(path, "F3", "unresolved", 3)
+    out = report(load_ledger(path))
+    section = out[out.index("## Still open"):out.index("## Needs you")]
+    for title in ("Below the bar", "Is fixed", "Is unresolved", "Is needs you", "Is dropped"):
+        assert title not in section
+    assert "None." in section
+    assert "Below the bar" in out[out.index("## Below bar"):]
 
 
 def test_report_lists_below_bar_findings_with_evidence(path):
