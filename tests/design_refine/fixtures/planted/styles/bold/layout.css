@@ -1,0 +1,5 @@
+[data-sp="shell"] { max-width: 760px; margin: 0 auto; }
+[data-sp="header"] { display: flex; justify-content: space-between; align-items: center; }
+[data-sp="nav"] { display: flex; gap: 20px; }
+[data-sp="card-list"] { list-style: none; margin: 0; padding: 0; }
+[data-sp="card"] > div { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }

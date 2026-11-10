@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Your bookings</title>
+<link id="sp-style" rel="stylesheet" href="">
+<link id="sp-layout" rel="stylesheet" href="">
+</head>
+<body>
+<div data-sp="shell">
+<header data-sp="header" data-el="El1">
+<h1 data-sp="heading">Your bookings</h1>
+<nav data-sp="nav">
+<a data-sp="link" href="#" data-action="go-home" data-exit="home">Home</a>
+<a data-sp="link" href="#" data-action="go-schedule" data-exit="schedule">Schedule</a>
+<a data-sp="link" href="#" data-action="go-account" data-exit="account">Account</a>
+</nav>
+</header>
+<main data-sp="content">
+<section data-sp="section" data-el="El2">
+<h2 data-sp="heading">Credits</h2>
+<p data-sp="text">You have 12 credits left. They renew on 1 December.</p>
+</section>
+<section data-sp="section" data-el="El3">
+<h2 data-sp="heading">Upcoming classes</h2>
+<ul data-sp="card-list">
+<li data-sp="card" data-el="El4">
+<p data-sp="text" data-sp-variant="time">Tue 12 Nov, 7:30 AM</p>
+<h3 data-sp="heading">Morning Flow Yoga</h3>
+<div>
+<button data-sp="button" data-action="cancel-reservation" data-exit="cancelled">Cancel reservation</button>
+<button data-sp="button" data-action="add-to-calendar" data-exit="calendar">Add to calendar</button>
+<button data-sp="button" data-action="bring-a-friend" data-exit="invite">Bring a friend</button>
+</div>
+</li>
+<li data-sp="card" data-el="El4">
+<p data-sp="text" data-sp-variant="time">Thu 14 Nov, 6:00 PM</p>
+<h3 data-sp="heading">Lunch Break Ride</h3>
+<div>
+<button data-sp="button" data-action="cancel-reservation" data-exit="cancelled">Cancel reservation</button>
+<button data-sp="button" data-action="add-to-calendar" data-exit="calendar">Add to calendar</button>
+<button data-sp="button" data-action="bring-a-friend" data-exit="invite">Bring a friend</button>
+</div>
+</li>
+</ul>
+</section>
+</main>
+</div>
+</body>
+</html>

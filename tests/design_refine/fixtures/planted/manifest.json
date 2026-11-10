@@ -1,0 +1,20 @@
+{
+  "pages": [
+    {
+      "slug": "booking",
+      "title": "Your bookings"
+    }
+  ],
+  "styles": [
+    {
+      "hasLayout": true,
+      "id": "bold",
+      "name": "bold"
+    },
+    {
+      "hasLayout": true,
+      "id": "plain",
+      "name": "plain"
+    }
+  ]
+}
