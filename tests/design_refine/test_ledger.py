@@ -497,3 +497,42 @@ def test_load_rejects_non_object_finding(path):
     with pytest.raises(LedgerError) as exc:
         load_ledger(path)
     assert "ledger-finding-not-object" in [p.code for p in exc.value.problems]
+
+
+# --- view: what the review critic sees -------------------------------------
+
+VIEW_KEYS = {"id", "title", "layer", "severity", "kind", "before", "after", "why", "fixer_instruction", "status", "attempts"}
+
+
+def test_view_lists_findings_without_approaches_for_every_status(path):
+    statuses = ledger.STATUSES
+    ingest(path, [finding(title="finding %d" % i) for i in range(len(statuses))])
+    data = json.loads(path.read_text())
+    for number, state in enumerate(statuses, 1):
+        entry = data["findings"]["F%d" % number]
+        entry["status"] = state
+        entry["attempts"] = 1
+        entry["approaches"] = ["secret fixer approach %d" % number]
+    path.write_text(json.dumps(data))
+
+    view = ledger.view(load_ledger(path))
+
+    assert [f["id"] for f in view] == ["F%d" % n for n in range(1, len(statuses) + 1)]
+    assert [f["status"] for f in view] == list(statuses)
+    for item in view:
+        assert set(item) == VIEW_KEYS
+        assert item["attempts"] == 1
+    assert "secret fixer approach" not in json.dumps(view)
+
+
+def test_view_orders_by_id_number(path):
+    ingest(path, [finding(title="t%d" % i) for i in range(1, 8)])
+    ingest(path, [finding(same_as="F%d" % i, title="t%d" % i) for i in range(1, 8)] + [finding(title="t8")])
+    data = json.loads(path.read_text())
+    data["findings"]["F10"] = dict(data["findings"]["F8"], id="F10")
+    path.write_text(json.dumps(data))
+    assert [f["id"] for f in ledger.view(load_ledger(path))][-3:] == ["F7", "F8", "F10"]
+
+
+def test_view_of_empty_ledger_is_empty_list(path):
+    assert ledger.view(load_ledger(path)) == []

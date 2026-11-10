@@ -10,7 +10,7 @@ Review mode gets:
 - **Page source**: the stylable HTML (`pages/<slug>/index.html`).
 - **CSS**: that style's `style.css` and, if it has one, `layout.css`.
 - **Intent**: one sentence saying what the page is for. Judge everything against it.
-- **Ledger**: the findings so far, each with an id (`F1`, `F2`, ...), its fields and a status.
+- **Ledger view**: a JSON file of the findings so far, each with an id (`F1`, `F2`, ...), its fields, a status and an attempt count. It is the ledger with the fixers' approaches taken out; you never get the ledger file itself.
 
 Compare mode gets two screenshots, **before first, after second**, and the intent.
 
@@ -76,7 +76,7 @@ Walk all three passes on every review, even ones that look clean.
 
 ### 3. Match against the ledger
 
-Account for every ledger id whose status is `open`, `retry` or `attempted`:
+Account for every id in the ledger view whose status is `open`, `retry` or `attempted`:
 
 - **Still there**, even partly, even if you would word it differently: list it with `same_as` set to that id and keep its `title`. Match by the same element and the same cause, not the same words.
 - **Gone**: leave it out. Leaving an id out tells the ledger the problem is fixed. Leave it out only when the problem is gone from what you see.

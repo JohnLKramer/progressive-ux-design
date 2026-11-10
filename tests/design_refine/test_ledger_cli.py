@@ -139,3 +139,35 @@ def test_ledger_malformed_finding_exits_1_for_ingest_and_attempt(tmp_path):
         assert result.returncode == 1, args
         assert "ledger-finding-missing-field" in result.stdout
         assert "Traceback" not in result.stderr
+
+
+def test_view_prints_findings_without_approaches(tmp_path):
+    ledger = tmp_path / "ledger.json"
+    assert run("init", ledger).returncode == 0
+    run("ingest", ledger, write_critique(tmp_path, [finding()]))
+    run("attempt", ledger, "F1", "--approach", "secret fixer approach", "--result", "gate-failed")
+    result = run("view", ledger)
+    assert result.returncode == 0, result.stderr
+    view = json.loads(result.stdout)
+    assert [f["id"] for f in view] == ["F1"]
+    assert view[0]["status"] == "retry" and view[0]["attempts"] == 1
+    assert "approaches" not in view[0]
+    assert "secret fixer approach" not in result.stdout
+
+
+def test_view_malformed_or_missing_ledger_exits_1(tmp_path):
+    ledger = tmp_path / "ledger.json"
+    ledger.write_text(json.dumps({"version": 1}))
+    result = run("view", ledger)
+    assert result.returncode == 1
+    assert "ledger-missing-key" in result.stdout
+    assert "Traceback" not in result.stderr
+    missing = run("view", tmp_path / "nope.json")
+    assert missing.returncode == 1
+    assert "ledger-missing" in missing.stdout
+
+
+def test_view_usage_errors_exit_2():
+    for args in (["view"], ["view", "a", "b"]):
+        result = run(*args)
+        assert result.returncode == 2, args

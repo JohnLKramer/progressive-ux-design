@@ -359,6 +359,15 @@ def status(ledger: dict) -> dict:
     return {"stop": reason is not None, "reason": reason, "next": next_id}
 
 
+VIEW_FIELDS = ("id",) + STORED_FIELDS + ("status", "attempts")
+
+
+def view(ledger: dict) -> List[dict]:
+    """The findings as the review critic may see them: never the fixers' `approaches`."""
+    findings = sorted(ledger["findings"].values(), key=lambda f: _id_number(f["id"]))
+    return [{k: f[k] for k in VIEW_FIELDS} for f in findings]
+
+
 def _section(title: str, lines: List[str]) -> List[str]:
     return ["## " + title, ""] + (lines if lines else ["None."]) + [""]
 
@@ -419,7 +428,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("ingest")
     p.add_argument("ledger", type=Path)
     p.add_argument("critique", type=Path)
-    for name in ("next", "status", "report"):
+    for name in ("next", "status", "report", "view"):
         sub.add_parser(name).add_argument("ledger", type=Path)
     p = sub.add_parser("attempt")
     p.add_argument("ledger", type=Path)
@@ -444,6 +453,8 @@ def _dispatch(args: argparse.Namespace) -> str:
         return dump(next_finding(ledger))
     if args.command == "status":
         return dump(status(ledger))
+    if args.command == "view":
+        return dump(view(ledger))
     return report(ledger)
 
 

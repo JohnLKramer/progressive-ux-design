@@ -53,11 +53,24 @@ def test_critic_example_compare_json_has_a_valid_verdict():
 
 REPO_ROOT = SKILL_DIR.parents[1]
 FIXERS = ("fix-structural.md", "fix-style.md")
+BRIEFS = ("critic.md",) + FIXERS
 MARKER_ATTRS = ("data-el", "data-action", "data-exit", "data-variant")
+BRIEF_PLACEHOLDERS = {
+    "<style-switcher-dir>": REPO_ROOT / "skills" / "style-switcher",
+    "<ux-skill-dir>": REPO_ROOT / "skills" / "progressive-ux-design",
+}
 
 
-def _repo_paths(text):
-    return sorted(set(re.findall(r"`(skills/[^`\s]+\.(?:md|py|css|json|html))`", text)))
+def _brief_paths(text):
+    """Every `<style-switcher-dir>/...` or `<ux-skill-dir>/...` file path in backticks, resolved against the repo."""
+    found = re.findall(r"`(?:python3 -I )?(<(?:style-switcher-dir|ux-skill-dir)>)/([^`\s]+\.(?:md|py|css|json|html))", text)
+    return sorted({(ph + "/" + rel, BRIEF_PLACEHOLDERS[ph] / rel) for ph, rel in found})
+
+
+def _section_text(text, heading):
+    start = text.index(heading)
+    nxt = re.search(r"^#{1,3} ", text[start + len(heading):], re.M)
+    return text[start: start + len(heading) + nxt.start()] if nxt else text[start:]
 
 
 def test_fixer_briefs_state_allowed_paths_and_needs_you_escape():
@@ -83,22 +96,51 @@ def test_structural_brief_names_marker_attrs_and_build_html_path():
     text = (SKILL_DIR / "fix-structural.md").read_text()
     for attr in MARKER_ATTRS:
         assert "`%s`" % attr in text, attr
-    for rel in (
-        "skills/progressive-ux-design/build-html.md",
-        "skills/style-switcher/make-stylable.md",
-        "skills/style-switcher/role-vocabulary.md",
+    mentioned = dict(_brief_paths(text))
+    for token in (
+        "<ux-skill-dir>/build-html.md",
+        "<style-switcher-dir>/make-stylable.md",
+        "<style-switcher-dir>/role-vocabulary.md",
+        "<style-switcher-dir>/scripts/validate.py",
     ):
-        assert "`%s`" % rel in text, rel
-        assert (REPO_ROOT / rel).is_file(), rel
+        assert token in mentioned, token
+        assert mentioned[token].is_file(), token
     assert "validate.py page" in text
 
 
-def test_every_repo_path_in_fixer_briefs_exists():
+def test_every_skill_path_in_fixer_briefs_exists():
     for name in FIXERS:
-        paths = _repo_paths((SKILL_DIR / name).read_text())
+        paths = _brief_paths((SKILL_DIR / name).read_text())
         assert paths, name
-        for rel in paths:
-            assert (REPO_ROOT / rel).is_file(), "%s references missing %s" % (name, rel)
+        for token, path in paths:
+            assert path.is_file(), "%s references missing %s" % (name, token)
+
+
+def test_briefs_have_no_bare_repo_relative_skill_paths():
+    for name in BRIEFS:
+        text = (SKILL_DIR / name).read_text()
+        bare = re.findall(r"(?<![\w<>/.-])skills/[\w./-]+", text)
+        assert not bare, "%s uses repo-relative paths %s; use <style-switcher-dir> or <ux-skill-dir>" % (name, bare)
+        assert "<skill-dir>" not in text, "%s uses <skill-dir>; fixers get <style-switcher-dir>" % name
+
+
+def test_structural_brief_allows_writing_the_scratch_dir_and_builds_into_it():
+    text = (SKILL_DIR / "fix-structural.md").read_text()
+    allowed = _section_text(text, "## Inputs")
+    allowed = allowed[allowed.index("**Paths you may write**"): allowed.index("**Earlier approaches**")]
+    assert "scratch directory the orchestrator gives you" in allowed
+    flow = _section_text(text, "## With a screen doc")
+    build = [line for line in flow.splitlines() if "build-html" in line]
+    assert build and "scratch directory" in build[0], build
+    assert flow.index("scratch directory") < flow.index("make-stylable")
+    assert "Never write it to `ux/mockups/`" in flow
+    assert "`wireframe:`" in flow and "exactly as" in flow
+
+
+def test_fixer_validator_needs_you_says_the_orchestrator_restores():
+    for name in FIXERS:
+        text = (SKILL_DIR / name).read_text()
+        assert "`NEEDS-YOU: <validator output>` and leave the files as they are; the orchestrator restores them." in text, name
 
 
 # --- Orchestrator: SKILL.md, command, README, plugin.json -----------------
@@ -113,7 +155,7 @@ import render  # noqa: E402
 SKILL_MD = SKILL_DIR / "SKILL.md"
 STYLE_SWITCHER_DIR = REPO_ROOT / "skills" / "style-switcher"
 SCRIPT_PARSERS = {"ledger.py": ledger._build_parser, "gates.py": gates._build_parser}
-LEDGER_SUBCOMMANDS = ("init", "ingest", "next", "attempt", "status", "report")
+LEDGER_SUBCOMMANDS = ("init", "ingest", "next", "attempt", "status", "report", "view")
 GATES_SUBCOMMANDS = ("snapshot", "check", "restore")
 
 
@@ -197,6 +239,8 @@ def _resolve_mentioned_path(token):
         return SKILL_DIR / token[len("<skill-dir>/"):]
     if token.startswith("<style-switcher-dir>/"):
         return STYLE_SWITCHER_DIR / token[len("<style-switcher-dir>/"):]
+    if token.startswith("<ux-skill-dir>/"):
+        return BRIEF_PLACEHOLDERS["<ux-skill-dir>"] / token[len("<ux-skill-dir>/"):]
     if token.startswith("<") or token.startswith("/") or token.startswith("$"):
         return None  # a run-time path such as <log>/report.md
     if token.startswith("skills/"):
@@ -284,3 +328,59 @@ def test_command_and_plugin_mention_design_refine():
     assert "Use the `design-refine` skill with: $ARGUMENTS" in command
     plugin = json.loads((REPO_ROOT / ".claude-plugin" / "plugin.json").read_text())
     assert "design-refine" in plugin["description"]
+
+
+def _review_critic_bullet(text):
+    return next(line for line in text.splitlines() if line.startswith("- **Critic, review mode.**"))
+
+
+def test_review_critic_gets_the_ledger_view_not_the_ledger():
+    text = SKILL_MD.read_text()
+    bullet = _review_critic_bullet(text)
+    assert "<iter>/ledger-view.json" in bullet
+    assert "<log>/ledger.json" not in bullet
+    assert "python3 -I <skill-dir>/scripts/ledger.py view <log>/ledger.json > <iter>/ledger-view.json" in text
+    loop = _section_text(text, "## Per-style loop")
+    assert loop.index("ledger.py view") < loop.index("dispatch the critic in review mode on `<iter>/before.png`")
+    assert "Ledger view" in (SKILL_DIR / "critic.md").read_text()
+
+
+def test_fixer_dispatch_passes_both_skill_dirs():
+    text = SKILL_MD.read_text()
+    fixer = next(line for line in text.splitlines() if line.startswith("- **Fixer.**"))
+    assert "<style-switcher-dir>" in fixer and "<ux-skill-dir>" in fixer
+    assert "`<ux-skill-dir>` is the `skills/progressive-ux-design` directory" in text
+
+
+def test_preflight_renders_every_style_to_temp_before_ledger_init():
+    text = SKILL_MD.read_text()
+    preflight = _section_text(text, "## Preflight")
+    renders = [line for line in _fenced_blocks(preflight) for line in line.splitlines() if "render.py" in line]
+    assert renders, "Preflight must render the page"
+    assert all("--out <preflight>/" in line for line in renders), renders
+    assert "tempfile.mkdtemp" in preflight and "rm -rf -- <preflight>" in preflight
+    assert "Exit 3" in preflight and "Playwright" in preflight
+    assert text.index("render.py", text.index("## Preflight")) < text.index("scripts/ledger.py init <log>/ledger.json")
+    assert text.index("## Preflight") < text.index("mkdir -p <log>")
+
+
+def test_needs_you_checks_gates_before_restore():
+    text = SKILL_MD.read_text()
+    step7 = text[text.index("7. **Fix.**"): text.index("8. **Check.**")]
+    needs_you = step7[step7.index("starts with `NEEDS-YOU:`"):]
+    assert "gates.py check --snapshot <iter>/snapshot" in needs_you
+    assert needs_you.index("gates.py check") < needs_you.index("gates.py restore")
+    assert "cannot be auto-reverted" in needs_you
+    assert "--result gate-failed" in needs_you
+
+
+def test_finish_appends_an_iteration_log_with_screenshots():
+    text = SKILL_MD.read_text()
+    loop = _section_text(text, "## Per-style loop")
+    assert "**Iteration log.**" in loop
+    log = loop[loop.index("**Iteration log.**"):]
+    for word in ("<N>", "<id>", "<fixer line>", "kept", "gate-failed", "worse",
+                 "<iter>/before.png", "<iter>/after.png", "<iter>/cross-before.png", "<iter>/cross-after.png"):
+        assert word in log, word
+    finish = _section_text(text, "## Finish")
+    assert "## Iteration log" in finish
