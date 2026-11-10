@@ -139,3 +139,13 @@ def test_duplicate_attribute_is_case_insensitive_and_any_name(tmp_path):
 
 def test_hidden_attribute_is_allowed(tmp_path):
     assert validate_page(write(tmp_path, page('<div hidden data-sp="card">x</div>'))) == []
+
+
+def test_stat_role_and_status_badge_validate(tmp_path):
+    body = (
+        '<article data-sp="card"><div data-sp="part" data-sp-variant="head"><h3 data-sp="heading">Chiefs +3.5</h3></div>'
+        '<div data-sp="part" data-sp-variant="meta"><p data-sp="stat">Bet 10u</p>'
+        '<p data-sp="stat" data-sp-variant="primary">Payout 30u</p></div>'
+        '<p data-sp="badge" data-sp-variant="pending">Pending</p></article>'
+    )
+    assert validate_page(write(tmp_path, page(body))) == []

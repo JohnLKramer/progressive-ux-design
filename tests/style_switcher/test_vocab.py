@@ -3,12 +3,16 @@ from vocab import WRAPPERS, load_roles
 ROLES = {
     "header", "nav", "hero", "section", "card", "card-list", "media",
     "heading", "text", "button", "link", "input", "form", "tabs", "list",
-    "table", "badge", "avatar", "price", "footer", "part",
+    "table", "badge", "avatar", "price", "stat", "footer", "part",
 }
 
 
 def test_roles_match_spec():
     assert load_roles() == frozenset(ROLES | {"shell", "content", "sidebar"})
+
+
+def test_stat_is_a_role():
+    assert "stat" in load_roles()
 
 
 def test_wrappers():

@@ -20,11 +20,12 @@ Every styled element in a saved page or mockup carries one of these roles.
 - `tabs` — set of switchable views
 - `list` — plain list of items
 - `table` — tabular data
-- `badge` — small status or count label
+- `badge` — small status or count label; a status word or icon on a card (for example "◷ Pending") is a `badge` whose variant names the status: `positive`, `negative`, `pending`, `live` or `neutral`
 - `avatar` — user or entity picture
 - `price` — monetary amount
+- `stat` — key figure the reader scans for: a total, count, percent, ratio, streak or score (the value only; its label stays `text`); variant `primary` for the one lead figure of a panel or card, or free text such as `percent` or `streak`
 - `footer` — bottom bar of the page or of a section
-- `part` — named region inside a card, header or other repeated item (variant says which: `time`, `main`, `venue`, `action`, `summary`, `media`, `body`, `actions`, `profile`)
+- `part` — named region inside a card, header or other repeated item; the variant says which: `time`, `main`, `venue`, `action`, `summary`, `media`, `body`, `actions`, `profile`, `head` (a card's title area: heading, date, subtitle), `meta` (a row of small figures such as Bet / Bonus / Payout) or `row` (one label-and-value line in a stat panel)
 
 ## Wrappers
 
