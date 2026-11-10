@@ -39,8 +39,10 @@ def test_cli_snapshot_check_restore_cycle(ws):
     snap = run(*snap_args(ws, "--cross-style", "b"))
     assert snap.returncode == 0, snap.stderr
     data = json.loads(snap.stdout)
-    assert (data["slug"], data["style_id"], data["cross_style"]) == ("demo", "a", "b")
     dest = ws / ".design-refine" / "s1"
+    assert data == {"cross_style": "b", "dest": str(dest)}
+    assert (dest / "snapshot.json").is_file()
+    assert "sha256" not in snap.stdout and len(snap.stdout) < 500
 
     clean = run("check", "--snapshot", dest, "--kind", "structural")
     assert clean.returncode == 0, clean.stdout + clean.stderr

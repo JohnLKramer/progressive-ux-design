@@ -405,6 +405,12 @@ def report(ledger: dict) -> str:
         if f["status"] in ACTIVE_STATUSES and not at_or_above_bar(f["severity"], ledger["bar"]):
             below_bar.append("- %s (%s, %s): %s" % (f["id"], f["severity"], f["layer"], f["title"]))
             below_bar.append("  - Evidence: %s" % f["before"])
+    no_longer_seen: List[str] = []
+    for f in findings:
+        if f["status"] == "dropped" and f["kind"] != "preference":
+            no_longer_seen.append("- %s (%s, %s): %s" % (f["id"], f["severity"], f["layer"], f["title"]))
+            no_longer_seen.append("  - Evidence: %s" % f["before"])
+            no_longer_seen.append("  - Attempts: %d" % f["attempts"])
     attempts = ["- %s: %d" % (f["id"], f["attempts"]) for f in findings if f["attempts"]]
     lines = ["# Design refine report", ""]
     lines += _section("Fixed", fixed)
@@ -412,6 +418,7 @@ def report(ledger: dict) -> str:
     lines += _section("Still open", still_open)
     lines += _section("Needs you", needs_you)
     lines += _section("Below bar", below_bar)
+    lines += _section("No longer seen", no_longer_seen)
     lines += _section("Attempts per finding", attempts)
     return "\n".join(lines)
 

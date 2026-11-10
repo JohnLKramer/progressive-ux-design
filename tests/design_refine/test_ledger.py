@@ -406,7 +406,7 @@ def test_report_lists_unresolved_with_evidence_and_needs_you(path):
 
 def test_report_empty_sections_say_none(path):
     out = report(load_ledger(path))
-    assert out.count("None.") == 6
+    assert out.count("None.") == 7
 
 
 def test_report_still_open_lists_open_finding_with_evidence_and_attempts(path):
@@ -462,11 +462,24 @@ def test_report_lists_below_bar_findings_with_evidence(path):
     assert "Real problem" not in below
 
 
-def test_report_omits_findings_dropped_only_because_not_reraised(path):
-    ingest(path, [finding(title="Gone quietly", severity="P3"), finding(title="Gone too")])
+def test_report_lists_not_reraised_findings_under_no_longer_seen(path):
+    ingest(path, [finding(title="Gone quietly", severity="P3", before="old evidence"), finding(title="Gone too")])
+    record_attempt(path, "F2", "tried padding", "gate-failed")
     ingest(path, [])
     out = report(load_ledger(path))
-    assert "Gone quietly" not in out and "Gone too" not in out
+    assert out.index("## Below bar") < out.index("## No longer seen") < out.index("## Attempts per finding")
+    seen = out[out.index("## No longer seen"):out.index("## Attempts per finding")]
+    assert "F1 (P3" in seen and "Gone quietly" in seen and "old evidence" in seen
+    assert "F2" in seen and "Gone too" in seen and "Attempts: 1" in seen
+    assert "None." not in seen
+
+
+def test_report_declined_preference_is_not_under_no_longer_seen(path):
+    ingest(path, [finding(title="Make it purple", kind="preference")])
+    out = report(load_ledger(path))
+    seen = out[out.index("## No longer seen"):out.index("## Attempts per finding")]
+    assert "Make it purple" not in seen and "None." in seen
+    assert "Make it purple" in out[out.index("## Needs you"):out.index("## Below bar")]
 
 
 def test_report_lists_declined_preference_in_needs_you(path):

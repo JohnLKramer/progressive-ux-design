@@ -153,6 +153,17 @@ import ledger  # noqa: E402
 import render  # noqa: E402
 
 SKILL_MD = SKILL_DIR / "SKILL.md"
+_PATH_PLACEHOLDER = r"<(?:skill-dir|style-switcher-dir|workspace|log|iter|doc|preflight|scratch)>"
+
+
+def _plain(text):
+    """SKILL.md with the single quotes around path placeholders removed, so commands compare unquoted."""
+    return re.sub(r"'(%s[^'\s]*)'" % _PATH_PLACEHOLDER, r"\1", text)
+
+
+def _skill_text():
+    return _plain(SKILL_MD.read_text())
+
 STYLE_SWITCHER_DIR = REPO_ROOT / "skills" / "style-switcher"
 SCRIPT_PARSERS = {"ledger.py": ledger._build_parser, "gates.py": gates._build_parser}
 LEDGER_SUBCOMMANDS = ("init", "ingest", "next", "attempt", "status", "report", "view")
@@ -174,10 +185,15 @@ def _fenced_blocks(text):
 
 
 def _script_commands(text):
-    """(script, argv, line) for every `python3 ... <dir>/scripts/<script>.py ...` line in a fenced block."""
+    """(script, argv, line) for every `python3 ... <dir>/scripts/<script>.py ...` line in a fenced block.
+
+    argv is tokenised with shlex, so the single-quoted path placeholders come out unquoted. `line` is the
+    command with those quotes removed.
+    """
     commands = []
     for block in _fenced_blocks(text):
         for line in block.splitlines():
+            line = _plain(line)
             match = re.match(r"python3 (?:-I )?<skill-dir>/scripts/(ledger|gates|render)\.py(?: (.*))?$", line.strip())
             if match:
                 argv = shlex.split(match.group(2) or "")
@@ -251,7 +267,7 @@ def _resolve_mentioned_path(token):
 
 
 def test_skill_md_commands_reference_existing_scripts_and_briefs():
-    text = SKILL_MD.read_text()
+    text = _skill_text()
     tokens = set(re.findall(r"(?<![\w./>-])((?:<[\w-]+>/)?[\w./-]*?[\w-]+\.(?:md|py))(?!\w)", text))
     checked = []
     for token in sorted(tokens):
@@ -304,7 +320,7 @@ def test_skill_md_prose_mentions_only_real_subcommands():
 
 
 def test_skill_md_validate_commands_use_real_modes():
-    for block in _fenced_blocks(SKILL_MD.read_text()):
+    for block in _fenced_blocks(_skill_text()):
         for line in block.splitlines():
             if "validate.py" in line:
                 assert line.strip().startswith("python3 -I <style-switcher-dir>/scripts/validate.py "), line
@@ -335,7 +351,7 @@ def _review_critic_bullet(text):
 
 
 def test_review_critic_gets_the_ledger_view_not_the_ledger():
-    text = SKILL_MD.read_text()
+    text = _skill_text()
     bullet = _review_critic_bullet(text)
     assert "<iter>/ledger-view.json" in bullet
     assert "<log>/ledger.json" not in bullet
@@ -353,7 +369,7 @@ def test_fixer_dispatch_passes_both_skill_dirs():
 
 
 def test_preflight_renders_every_style_to_temp_before_ledger_init():
-    text = SKILL_MD.read_text()
+    text = _skill_text()
     preflight = _section_text(text, "## Preflight")
     renders = [line for line in _fenced_blocks(preflight) for line in line.splitlines() if "render.py" in line]
     assert renders, "Preflight must render the page"
@@ -365,7 +381,7 @@ def test_preflight_renders_every_style_to_temp_before_ledger_init():
 
 
 def test_needs_you_checks_gates_before_restore():
-    text = SKILL_MD.read_text()
+    text = _skill_text()
     step7 = text[text.index("7. **Fix.**"): text.index("8. **Check.**")]
     needs_you = step7[step7.index("starts with `NEEDS-YOU:`"):]
     assert "gates.py check --snapshot <iter>/snapshot" in needs_you
@@ -384,3 +400,63 @@ def test_finish_appends_an_iteration_log_with_screenshots():
         assert word in log, word
     finish = _section_text(text, "## Finish")
     assert "## Iteration log" in finish
+
+
+def test_path_placeholders_in_fenced_commands_are_single_quoted():
+    text = SKILL_MD.read_text()
+    checked = 0
+    for block in _fenced_blocks(text):
+        for line in block.splitlines():
+            if not line.strip().startswith(("python3", "mkdir", "rm ")) or "-I -c" in line:
+                continue
+            for match in re.finditer(r"(?<![\w])%s[^\s]*" % _PATH_PLACEHOLDER, line):
+                start = match.start()
+                assert start > 0 and line[start - 1] == "'" and match.group(0).endswith("'"), (
+                    "unquoted path placeholder %r in: %s" % (match.group(0), line.strip())
+                )
+                checked += 1
+    assert checked > 20
+
+
+def test_untrusted_inputs_require_the_file_writing_tool_for_page_derived_files():
+    text = SKILL_MD.read_text()
+    rules = _section_text(text, "## Untrusted inputs")
+    rule = next(line for line in rules.splitlines() if "file-writing tool" in line)
+    assert "never through a shell command, echo or heredoc" in rule
+    for word in ("critique", "iteration log", "report additions", "critic", "fixer", "page"):
+        assert word in rule, word
+    finish = _section_text(text, "## Finish")
+    assert "file-writing tool" in finish
+    assert "file-writing tool" in text[text.index("**Iteration log.**"):text.index("## Finish")]
+
+
+def test_review_critic_writes_critique_json_and_replies_done_n():
+    text = SKILL_MD.read_text()
+    bullet = _review_critic_bullet(text)
+    assert "<iter>/critique.json" in bullet and "DONE <n>" in bullet and "file-writing tool" in bullet
+    step2 = text[text.index("2. **Review.**"): text.index("3. **Ingest.**")]
+    assert "exactly `DONE <n>`" in step2
+    assert "missing or not parseable" in step2 and "stop with the reply shown" in step2
+    assert "Save it" not in step2
+    critic = (SKILL_DIR / "critic.md").read_text()
+    assert "DONE <n>" in critic and "`DONE 0`" in critic
+    assert "file-writing tool" in critic and "Critique path" in critic
+    compare = critic[critic.index("## Compare mode"):]
+    assert '{"verdict"' in compare and "DONE" not in compare
+
+
+def test_cross_check_stops_on_an_unrecognised_verdict():
+    text = SKILL_MD.read_text()
+    step9 = text[text.index("9. **Cross-check**"): text.index("10. **Render after.**")]
+    assert "other than `better`, `same` or `worse` stops the run with the reply shown" in step9
+
+
+def test_snapshot_step_reads_only_cross_style_and_dest():
+    text = SKILL_MD.read_text()
+    step6 = text[text.index("6. **Snapshot.**"): text.index("7. **Fix.**")]
+    assert '{"cross_style": ..., "dest": ...}' in step6
+
+
+def test_structural_brief_reuses_the_slug_so_make_stylable_step_1_is_skipped():
+    text = (SKILL_DIR / "fix-structural.md").read_text()
+    assert "Steps 2 to 6 apply" in text and "Steps 1 to 6" not in text

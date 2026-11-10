@@ -443,7 +443,8 @@ def _dispatch(args: argparse.Namespace) -> Tuple[int, str]:
         if cross is None:
             cross = _default_cross_style(args.workspace, args.style)
         data = snapshot(args.workspace, args.slug, args.style, args.dest, cross_style=cross, doc=args.doc)
-        return 0, json.dumps(data, indent=2)
+        # The full data (every file hash) stays in snapshot.json; the orchestrator needs only these.
+        return 0, json.dumps({"cross_style": data["cross_style"], "dest": str(args.dest)})
     if args.command == "check":
         problems = check(args.snapshot, args.kind)
         return (1, format_problems(problems)) if problems else (0, "")

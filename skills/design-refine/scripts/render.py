@@ -1,7 +1,7 @@
 """Styled copy and screenshot for design-refine.
 
-A styled copy is a scratch directory holding one page plus one style's CSS, with the page's
-`sp-style` / `sp-layout` links pointed at the copied files. It needs nothing outside its own
+A styled copy is a scratch directory holding one page plus one style folder (under `style/`), with the page's
+`sp-style` / `sp-layout` links pointed at its CSS. It needs nothing outside its own
 directory, so it is screenshotted in untrusted mode (no scripts, no remote loads).
 
 Runs as plain `python3`, not `-I`: Playwright lives in user site-packages.
@@ -27,6 +27,7 @@ from screenshot import playwright_available, screenshot  # noqa: E402
 EXIT_FAILED = 1
 EXIT_USAGE = 2
 EXIT_NO_PLAYWRIGHT = 3
+STYLE_SUBDIR = "style"
 FORCE_NO_BROWSER_ENV = "DESIGN_REFINE_FORCE_NO_BROWSER"
 
 
@@ -49,12 +50,13 @@ def build_styled_copy(workspace: Path, slug: str, style_id: str, out_dir: Path, 
         raise FileNotFoundError("style not found: %s" % (style_dir / "style.css"))
     out_dir = Path(out_dir)
     shutil.copytree(page_dir, out_dir, dirs_exist_ok=True)
-    shutil.copy2(style_dir / "style.css", out_dir / "style.css")
+    # The whole style folder goes to <copy>/style/, so url(assets/...) in its CSS resolves, and the
+    # page's own assets/ folder (copied beside index.html) cannot clash with the style's.
+    shutil.copytree(style_dir, out_dir / STYLE_SUBDIR)
     html = (out_dir / "index.html").read_text(encoding="utf-8")
-    html = _set_link_href(html, "sp-style", "style.css")
+    html = _set_link_href(html, "sp-style", STYLE_SUBDIR + "/style.css")
     if layout and (style_dir / "layout.css").is_file():
-        shutil.copy2(style_dir / "layout.css", out_dir / "layout.css")
-        html = _set_link_href(html, "sp-layout", "layout.css")
+        html = _set_link_href(html, "sp-layout", STYLE_SUBDIR + "/layout.css")
     (out_dir / "index.html").write_text(html, encoding="utf-8")
     return out_dir / "index.html"
 

@@ -50,7 +50,7 @@ The doc is the source of truth; the page is derived from it.
 2. Edit the doc to make the fix. Change only what the finding needs.
 3. Run the `build-html` procedure in `<ux-skill-dir>/build-html.md` on the doc to rebuild the mockup HTML, with its output (the mockup HTML and its `wireframe.css`) in the scratch directory from the start. Never write it to `ux/mockups/` or any other path: the mockup is an intermediate, and only the page folder and the doc are kept.
 4. Put the doc's `wireframe:` line back exactly as you noted it in step 1, or remove it if the doc had none. The build step points it at the scratch directory, which is deleted after you reply.
-5. Re-run the `make-stylable` steps in `<style-switcher-dir>/make-stylable.md` on the rebuilt mockup, writing into the same page folder `<workspace>/pages/<slug>/`. Use the same slug; do not pick a new one. Steps 1 to 6 apply, including `validate.py page` with `--source-html` set to the rebuilt mockup.
+5. Re-run the `make-stylable` steps in `<style-switcher-dir>/make-stylable.md` on the rebuilt mockup, writing into the same page folder `<workspace>/pages/<slug>/`. Use the same slug; do not pick a new one. Steps 2 to 6 apply, including `validate.py page` with `--source-html` set to the rebuilt mockup.
 
 ## Reply
 

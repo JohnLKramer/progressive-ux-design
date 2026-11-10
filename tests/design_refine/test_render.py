@@ -37,25 +37,36 @@ def test_build_styled_copy_sets_both_hrefs_and_copies_css(ws, tmp_path):
     out = build_styled_copy(ws, "demo", "a", tmp_path / "copy")
     assert out == tmp_path / "copy" / "index.html"
     html = out.read_text(encoding="utf-8")
-    assert link_href(html, "sp-style") == "style.css"
-    assert link_href(html, "sp-layout") == "layout.css"
-    assert (tmp_path / "copy" / "style.css").read_text() == (ws / "styles" / "a" / "style.css").read_text()
-    assert (tmp_path / "copy" / "layout.css").read_text() == (ws / "styles" / "a" / "layout.css").read_text()
+    assert link_href(html, "sp-style") == "style/style.css"
+    assert link_href(html, "sp-layout") == "style/layout.css"
+    copy = tmp_path / "copy"
+    assert (copy / "style" / "style.css").read_text() == (ws / "styles" / "a" / "style.css").read_text()
+    assert (copy / "style" / "layout.css").read_text() == (ws / "styles" / "a" / "layout.css").read_text()
 
 
 def test_no_layout_leaves_layout_href_unset(ws, tmp_path):
     out = build_styled_copy(ws, "demo", "a", tmp_path / "copy", layout=False)
     html = out.read_text(encoding="utf-8")
-    assert link_href(html, "sp-style") == "style.css"
+    assert link_href(html, "sp-style") == "style/style.css"
     assert link_href(html, "sp-layout") == ""
-    assert not (tmp_path / "copy" / "layout.css").exists()
 
 
 def test_style_without_layout_css_renders_style_only(ws, tmp_path):
     (ws / "styles" / "a" / "layout.css").unlink()
     out = build_styled_copy(ws, "demo", "a", tmp_path / "copy")
     assert link_href(out.read_text(encoding="utf-8"), "sp-layout") == ""
-    assert not (tmp_path / "copy" / "layout.css").exists()
+    assert not (tmp_path / "copy" / "style" / "layout.css").exists()
+
+
+def test_style_assets_are_copied_beside_the_linked_css_and_do_not_clash_with_page_assets(ws, tmp_path):
+    (ws / "styles" / "a" / "assets").mkdir()
+    (ws / "styles" / "a" / "assets" / "x.svg").write_text("<svg/>")
+    (ws / "pages" / "demo" / "assets").mkdir()
+    (ws / "pages" / "demo" / "assets" / "x.svg").write_text("<svg id='page'/>")
+    out = build_styled_copy(ws, "demo", "a", tmp_path / "copy")
+    css_dir = out.parent / Path(link_href(out.read_text(encoding="utf-8"), "sp-style")).parent
+    assert (css_dir / "assets" / "x.svg").read_text() == "<svg/>"
+    assert (out.parent / "assets" / "x.svg").read_text() == "<svg id='page'/>"
 
 
 def test_workspace_is_not_modified(ws, tmp_path):
@@ -163,6 +174,18 @@ def test_style_css_actually_applies_in_untrusted_render(ws, tmp_path):
                       untrusted=True, full_page=True)
     assert pixel(styled, 2, 2) == (255, 0, 0)
     assert pixel(unstyled, 2, 2) == (255, 255, 255)
+
+
+@needs_browser
+def test_style_asset_url_resolves_in_render(ws, tmp_path):
+    assets = ws / "styles" / "a" / "assets"
+    assets.mkdir()
+    (assets / "bg.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#00ff00"/></svg>'
+    )
+    (ws / "styles" / "a" / "style.css").write_text("html,body{background:url(assets/bg.svg)}\n")
+    out = render_page(ws, "demo", "a", tmp_path / "o.png", layout=False)
+    assert pixel(out, 2, 2) == (0, 255, 0)
 
 
 @needs_browser
