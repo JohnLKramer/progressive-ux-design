@@ -26,6 +26,7 @@ Load ONLY the file for the chosen mode.
 - Outputs go to the workspace folder.
 - A stylable page has no `script`, no `style` element, no inline `style`, no `on*` handlers, no remote assets, and two `<head>` slots with no `href` attribute: `<link id="sp-style" rel="stylesheet">` and `<link id="sp-layout" rel="stylesheet">`.
 - Roles come only from `role-vocabulary.md`. Never invent one. The only other attribute a page may add is `hidden`, within the limits in `role-vocabulary.md`.
+- Emphasis: a style highlights the page's content, not just its chrome. Lead figures, headings and status badges carry the brand's accent and status colors; `extract-style.md` says how.
 - Failures stop loudly with the output shown. The one soft case is display mode 2 on a style without `layout.css`: the shell shows the style alone and says so.
 
 ## Untrusted inputs

@@ -8,6 +8,8 @@ judges the numbers. Problems come back as `code: message` strings.
 - bullets: a visible list item in a role container that still shows a list marker.
 - sidebar-too-wide: a visible sidebar at least 40% of the viewport (layout applied only).
 - horizontal-overflow: the page is wider than the viewport.
+- flat-content: inside a visible content wrapper, no visible heading, stat, price or badge differs from the
+  body text in color or background, so only the chrome is styled.
 """
 from __future__ import annotations
 
@@ -53,13 +55,35 @@ MEASURE_JS = """() => {
   });
   const sidebars = [];
   d.querySelectorAll('[data-sp="sidebar"]').forEach((e) => { if (shown(e)) sidebars.push({width: e.getBoundingClientRect().width}); });
-  return {vw: w.innerWidth, docWidth: d.documentElement.scrollWidth, cards: cards, duplicates: duplicates,
+  const bodyCs = w.getComputedStyle(d.body);
+  const emphasis = [];
+  d.querySelectorAll('[data-sp="content"]').forEach((c) => {
+    if (!shown(c)) return;
+    c.querySelectorAll('[data-sp="heading"], [data-sp="stat"], [data-sp="price"], [data-sp="badge"]').forEach((e) => {
+      if (!shown(e)) return;
+      const cs = w.getComputedStyle(e);
+      emphasis.push({color: cs.color, background: cs.backgroundColor});
+    });
+  });
+  return {vw: w.innerWidth, bodyColor: bodyCs.color, bodyBackground: bodyCs.backgroundColor, emphasis: emphasis, docWidth: d.documentElement.scrollWidth, cards: cards, duplicates: duplicates,
           bullets: bullets, bulletSample: bulletSample, sidebars: sidebars};
 }"""
 
 
 def _one_row(parts: List[Dict[str, float]]) -> bool:
     return max(p["top"] for p in parts) < min(p["bottom"] for p in parts)
+
+
+def _transparent(color: str) -> bool:
+    return color == "transparent" or color.replace(" ", "").endswith(",0)")
+
+
+def _flat(measure: Dict[str, Any]) -> bool:
+    emphasis = measure.get("emphasis") or []
+    body_bg = measure.get("bodyBackground", "")
+    return bool(emphasis) and all(
+        e["color"] == measure.get("bodyColor") and (_transparent(e["background"]) or e["background"] == body_bg)
+        for e in emphasis)
 
 
 def evaluate_visual(measure: Dict[str, Any], layout_applied: bool) -> List[str]:
@@ -71,6 +95,9 @@ def evaluate_visual(measure: Dict[str, Any], layout_applied: bool) -> List[str]:
         problems.append("bullets: %d list items still show a marker, first: %r" % (measure["bullets"], measure["bulletSample"]))
     for text in measure["duplicates"]:
         problems.append("duplicate-nodes: two visible copies of %r" % text)
+    if _flat(measure):
+        problems.append("flat-content: content uses no emphasis color; only the chrome is styled (%d heading, stat, price "
+                        "and badge elements match the body text)" % len(measure["emphasis"]))
     if layout_applied:
         stacked = sum(1 for card in measure["cards"] if not _one_row(card["parts"]))
         if stacked:

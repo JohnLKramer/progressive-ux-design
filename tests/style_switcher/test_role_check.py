@@ -152,3 +152,10 @@ def test_mockup_meets_contract_except_slots_and_roles():
     text = (FIXTURES / "mockup.html").read_text(encoding="utf-8")
     assert "data-sp" not in text
     assert coverage(FIXTURES / "mockup.html")["roled_elements"] == 0
+
+
+def test_page_using_stat_is_covered_and_validates(tmp_path):
+    html = PAGE.replace("<p>more</p>", '<p data-sp="stat" data-sp-variant="primary">1,250u</p>')
+    path = write(tmp_path, html.replace("<html><head><title>t</title></head>", '<html><head><title>t</title><link id="sp-style" rel="stylesheet"><link id="sp-layout" rel="stylesheet"></head>'))
+    assert coverage(path)["roled_elements"] == 4
+    assert validate_page(path) == []

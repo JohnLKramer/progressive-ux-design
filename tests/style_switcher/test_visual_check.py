@@ -65,6 +65,37 @@ def test_horizontal_overflow_fails():
     assert evaluate_visual(measure(docWidth=1281), layout_applied=True) == []
 
 
+WHITE = "rgb(255, 255, 255)"
+CLEAR = "rgba(0, 0, 0, 0)"
+
+
+def emphasis(color=WHITE, background=CLEAR):
+    return {"color": color, "background": background}
+
+
+def flat_measure(items):
+    return measure(bodyColor=WHITE, bodyBackground="rgb(0, 0, 0)", emphasis=items)
+
+
+def test_flat_content_when_all_emphasis_matches_body_text():
+    problems = evaluate_visual(flat_measure([emphasis(), emphasis(background="rgb(0, 0, 0)")]), layout_applied=False)
+    assert codes(problems) == ["flat-content"]
+    assert "only the chrome is styled" in problems[0]
+    assert codes(evaluate_visual(flat_measure([emphasis()]), layout_applied=True)) == ["flat-content"]
+
+
+def test_one_accented_stat_is_clean():
+    assert evaluate_visual(flat_measure([emphasis(), emphasis(color="rgb(83, 211, 55)")]), layout_applied=False) == []
+
+
+def test_tinted_badge_background_is_clean():
+    assert evaluate_visual(flat_measure([emphasis(background="rgba(83, 211, 55, 0.18)")]), layout_applied=False) == []
+
+
+def test_no_emphasis_elements_is_clean():
+    assert evaluate_visual(flat_measure([]), layout_applied=False) == []
+
+
 needs_browser = pytest.mark.skipif(not playwright_available(), reason="Playwright is not importable")
 
 GOOD_CSS = """
