@@ -215,3 +215,15 @@ Workspace: `tests/design_refine/fixtures/planted/`, style `plain`, cross style `
 - The run on the bake-off page (plan Task 12 step 4).
 - Several styles in one run; `--bar` other than P2.
 - Cost: about 25 subagent dispatches for 4 kept fixes.
+
+## Session: style-switcher content emphasis (2026-11-09)
+
+Styled pages spent each brand's colors on the title and header only; key figures, statuses and cards looked the same in every style. Plan: `nimbalyst-local/plans/let-s-improve-the-stylized-melodic-puffin.md`.
+
+- Vocabulary: new role `stat` (key figure; variant `primary` for the lead figure), status variants for `badge` (`positive`, `negative`, `pending`, `live`, `neutral`), and `part` variants `head`, `meta`, `row`. The finalize lint now requires a `[data-sp="stat"]` rule in every style.
+- `make-stylable.md` step 4: "Mark what a reader scans for", with the Stash card as a worked example.
+- `extract-style.md`: tokens `accent-2`, `positive`, `negative`, `pending`; new step 6 item "Emphasis" (three tiers, accent inside content, tabular stats, tinted status pills, card head band, status edge, meta chips, screenshot self-check).
+- `visual_check.py`: new `flat-content` problem when no visible heading, stat, price or badge inside `content` differs from the body text color or background. Runs in both display modes.
+- `python3 -m pytest tests/style_switcher`: 681 passed.
+- End to end in a temp workspace: make-stylable on `pc-ux-design/screens/html/stash.html` (validates; 19 `stat`, 3 status badges, 3 `head`, 3 `meta`, 10 `row`), styles extracted from `scratch/examples/dk` and `scratch/examples/prizepicks` (both finalize `ok`), acceptance passes on all 4 combinations. With the dk emphasis rules commented out, acceptance fails with `flat-content` in both modes. The styles were written in this session, not by a fresh agent following the skill, so whether an agent follows the new emphasis guidance is not yet tested.
+- `flat-content` looks only inside `content`; a stat panel in a `sidebar` is not checked. `role_check.py` reports totals, not a count per role.
