@@ -17,6 +17,17 @@ The doc and the HTML cross-reference by id:
 `build-html` checks this both ways: every row, callout and action has a node, and no node is marked that the doc lacks. Where the sketch and the tables disagree, the doc wins and the difference becomes an Open question. The mode does not convert a bare mockdown with no doc; make the screen doc first (see `convert-existing-doc.md`).
 
 
+# Critiquing how a page looks
+
+The `critique-aesthetics` mode judges the look of a built, styled page, not its usability. It checks the page against a rulebook (`skills/progressive-ux-design/aesthetic-rules.md`) drawn from Refactoring UI's "7 Practical Tips for Cheating at Design", Learn UI Design's "7 Rules for Creating Gorgeous UI", "Color in UI Design: A Practical Framework" and "3 Pro Tips on Alignment", and Butterick's Practical Typography. The rules cover type size, line spacing and length, weights, text colours, colour variations, emphasis, whitespace, text and icon alignment, borders and shadows, icons and button hierarchy.
+
+It replies with a one-line impression and a table of findings, each citing a rule id with the measured value and a concrete fix. It ends by asking which findings to fix (all, a numbered subset, or none) and edits nothing until you answer. Usability and accessibility are out of scope.
+
+Fixes never invent colours. A finding that needs a new colour gives the direction ("a darker, more saturated shade of the button fill") and is marked `needs colour approval`; when you choose it, the mode shows the exact value (from your approved palette if you name one) and applies the colour only once you approve it.
+
+Line length (rule T3) is measured in the browser, not estimated: `python3 skills/progressive-ux-design/scripts/measure_line_length.py --html <page>` (or `--workspace`, `--slug` and `--style`) prints the characters on each rendered line of every text block as JSON. It needs Playwright for Python and Chromium. Its tests are in `tests/aesthetics/`.
+
+
 # Style switcher
 
 The `style-switcher` skill previews the same pages in the look of several sites. A workspace holds the pages (`pages/<slug>/index.html`) and the styles (`styles/<id>/`), and a local preview shell lets you flip between them with arrows, a style dropdown and a display mode toggle (style only, or style plus layout).
