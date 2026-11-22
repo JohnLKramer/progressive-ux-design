@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Page</title>
+<link id="sp-style" rel="stylesheet" href="">
+<link id="sp-layout" rel="stylesheet" href="">
+</head>
+<body>
+<div data-sp="shell">
+<header data-sp="header" data-el="El1">
+<h1 data-sp="heading">Edit profile</h1>
+<nav data-sp="nav">
+<a data-sp="link" href="#" data-action="go-home" data-exit="home">Home</a>
+<a data-sp="link" href="#" data-action="go-account" data-exit="account">Account</a>
+</nav>
+</header>
+<main data-sp="content">
+<div data-sp="toast" data-el="El2">Saved!</div>
+<section data-sp="section" data-el="El3">
+<h2 data-sp="heading">Stuff</h2>
+<form>
+<p data-sp="field"><label for="n">Thing 1</label><input id="n" type="text" value="J"></p>
+<p data-sp="error">Invalid input</p>
+<p data-sp="field"><label for="e">Email</label><input id="e" type="email" value="jane@example.com"></p>
+<button data-sp="button" data-action="save" data-exit="saved" type="submit">Save</button>
+</form>
+</section>
+<section data-sp="section" data-el="El4">
+<h2 data-sp="heading">Info</h2>
+<ul data-sp="card-list">
+<li data-sp="card"><h3 data-sp="heading">Billing</h3><p data-sp="text">Manage your plan, invoices and payment methods in one place, and change how often you are billed.</p><a data-sp="link" href="#" data-action="more-billing" data-exit="billing">Read more</a> <a data-sp="dismiss" href="#" data-action="dismiss-billing" data-exit="home">x</a></li>
+<li data-sp="card"><h3 data-sp="heading">Privacy</h3><p data-sp="text">Choose who can see your classes and activity, and download or delete the data we hold about you.</p><a data-sp="link" href="#" data-action="more-privacy" data-exit="privacy">Read more</a> <a data-sp="dismiss" href="#" data-action="dismiss-privacy" data-exit="home">x</a></li>
+<li data-sp="card"><h3 data-sp="heading">Notifications</h3><p data-sp="text">Pick which reminders and offers reach you by email, text or push, and when they are sent.</p><a data-sp="link" href="#" data-action="more-notifications" data-exit="notifications">Click here</a> <a data-sp="dismiss" href="#" data-action="dismiss-notifications" data-exit="home">x</a></li>
+</ul>
+</section>
+</main>
+</div>
+</body>
+</html>

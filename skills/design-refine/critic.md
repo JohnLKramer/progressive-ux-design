@@ -51,6 +51,11 @@ Walk all three passes on every review, even ones that look clean.
 | 3.3.2 Labels or Instructions | An input has no visible label, or only a placeholder that vanishes on typing. |
 | 1.3.1 Info and Relationships | Headings are not marked as headings or skip levels, a visual list is not a list, a visual group has no structure behind it. |
 | 2.1.1 Keyboard | An action sits on an element the keyboard cannot reach, such as a link with no `href`. |
+| 1.4.10 Reflow | A container has a fixed `width` or `min-width` above 320px that no media query releases, so the page needs horizontal scrolling at 320px wide. |
+| 1.4.12 Text Spacing | Text has `line-height`, `letter-spacing` or `word-spacing` set with `!important`, or sits in a box with a fixed `height` and `overflow: hidden`, so a reader's own text spacing would be overridden or clipped. |
+| 2.4.2 Page Titled | `<title>` is empty or names nothing about the page ("Page", "Untitled", "Document"). |
+| 2.5.5 Target Size (Level AAA, kept for touch use) | A standalone control (button, icon link, dismiss) is under 44 by 44 CSS px. A link inside a sentence is not a standalone control. |
+| 4.1.3 Status Messages | A result message (saved, failed, loading) has no `role="status"`, `role="alert"` or `aria-live` on it. |
 
 **Usability.** Check against Nielsen's ten heuristics, cited by number: #1 Visibility of system status, #2 Match between system and the real world, #3 User control and freedom, #4 Consistency and standards, #5 Error prevention, #6 Recognition rather than recall, #7 Flexibility and efficiency of use, #8 Aesthetic and minimalist design, #9 Help users recognize, diagnose, and recover from errors, #10 Help and documentation.
 
